@@ -71,8 +71,8 @@ add_executable(main
 
 target_link_libraries(
         main
-#        log4cplus
-#        logTest
+        #log4cplus
+        #logTest
         ${catkin_LIBRARIES}
         ${QT_LIBRARIES}
         ${OpenCV_LIBS}

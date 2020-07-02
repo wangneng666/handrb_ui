@@ -176,7 +176,8 @@ void MainWindow::thread_rbQthread_beginRun() {
             break;
         case 1:
             //启动真机运行launch文件
-            system("roslaunch hsr_handrobot handRobotGrab.launch");
+            system("rosrun openni2_tracker peopledetection.sh");
+            //system("roslaunch handrb_ui handRobotGrab.launch");
             break;
         case 2:
             //启动rviz文件运行文件
@@ -412,9 +413,10 @@ void MainWindow::slot_btn_tabfunc_persondeteck() {
     } else{
         //关闭行人检测
         msg.data= false;
+        visionDetech.publish(msg);
         btn_tabfunc_persondeteck->setText("打开行人检测");
+
     }
-    visionDetech.publish(msg);
     flag_switchPersonDecBtnText=!flag_switchPersonDecBtnText;
 }
 

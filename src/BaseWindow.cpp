@@ -30,8 +30,7 @@ void BaseWindow::initQtVal() {
             "padding:0 1px;\n""\n""}"
             ;
     //获取工程文件路径
-
-    photoPath= QDir::currentPath() +QString("/src/HS_HandGrasp/hsr_handrobot/photo/");
+    photoPath= QDir::currentPath() +QString("/src/HS_HandGrasp/handrb_ui/photo/");
     logPath= QDir::currentPath();
     QPixmap tmp_pixmap_red=QPixmap(photoPath+"light_red.png");
     QPixmap tmp_pixmap_green=QPixmap(photoPath+"light_green.png");
@@ -416,7 +415,8 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     horizontalLayout_11->setObjectName(QString::fromUtf8("horizontalLayout_11"));
     label_tabfunc_image = new QLabel(groupBox_tabfunc_1);
     label_tabfunc_image->setObjectName(QString::fromUtf8("label_tabfunc_image"));
-    label_tabfunc_image->setMaximumSize(QSize(300, 300));
+    label_tabfunc_image->setFixedSize(512,424);
+    //label_tabfunc_image->setMaximumSize(QSize(300, 300));
     label_tabfunc_image->setPixmap(QPixmap(QString::fromUtf8("../catkin_ws/src/HsDualAppBridge/rb_ui/photo/question.jpg")));
 
     horizontalLayout_11->addWidget(label_tabfunc_image);

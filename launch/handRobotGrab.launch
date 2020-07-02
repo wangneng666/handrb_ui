@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<launch>
+    <node pkg="openni2_tracker" type="vision_detect" name="vision_detect_bridge" output="screen" />
+<!--
+    <node pkg="openni2_tracker" type="hello" name="shakehand_listener" output="screen" />
+ -->
+</launch>

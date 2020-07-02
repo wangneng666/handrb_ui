@@ -13,6 +13,7 @@
 
 //消息类型头文件
 #include "std_msgs/String.h"
+#include "std_msgs/Bool.h"
 #include "rb_msgAndSrv/rb_DoubleBool.h"
 #include "rb_msgAndSrv/rb_string.h"
 #include "sensor_msgs/Image.h"
@@ -44,6 +45,7 @@ private:
     //全局变量
     int index_sysMode=0;
     QMutex mutex_devDetector;
+    bool flag_switchPersonDecBtnText= false;
     //设备监控
     vector<devDetector*> devDetectorList;//设备监控器列表
     devDetector RobConn_Detector{"RobConn_Detector",0, false,label_tabmain_rbConnStatusValue}; //机器人连接状态
@@ -102,6 +104,7 @@ private:
     //功能界面槽函数
     void slot_btn_tabfunc_shakehand();//机器人握手
     void slot_btn_tabfunc_grepwawa();//机器人抓娃娃
+    void slot_btn_tabfunc_persondeteck();//行人检测
     //日志界面槽函数
     void slot_btn_tabrecord_outRecord();//导出日志
     void slot_btn_tabrecord_clearRecord();//清除日志

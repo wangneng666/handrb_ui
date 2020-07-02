@@ -30,7 +30,8 @@ void BaseWindow::initQtVal() {
             "padding:0 1px;\n""\n""}"
             ;
     //获取工程文件路径
-    photoPath= QDir::currentPath() +QString("/src/hsr_handrobot/handrb_ui/photo/");
+
+    photoPath= QDir::currentPath() +QString("/src/HS_HandGrasp/hsr_handrobot/photo/");
     logPath= QDir::currentPath();
     QPixmap tmp_pixmap_red=QPixmap(photoPath+"light_red.png");
     QPixmap tmp_pixmap_green=QPixmap(photoPath+"light_green.png");
@@ -452,6 +453,16 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     btn_tabfunc_grepwawa->setLayoutDirection(Qt::LeftToRight);
 
     horizontalLayout_12->addWidget(btn_tabfunc_grepwawa);
+
+    btn_tabfunc_persondeteck = new QPushButton(groupBox_tabfunc_2);
+    btn_tabfunc_persondeteck->setObjectName(QString::fromUtf8("btn_tabfunc_persondeteck"));
+    btn_tabfunc_persondeteck->setMaximumSize(QSize(150, 50));
+    btn_tabfunc_persondeteck->setFixedSize(BTN_W,BTN_H);
+    btn_tabfunc_persondeteck->setLayoutDirection(Qt::LeftToRight);
+    btn_tabfunc_persondeteck->setText("打开行人检测");
+
+    horizontalLayout_12->addWidget(btn_tabfunc_persondeteck);
+
 
     vLayout_tabfunc_11->addWidget(groupBox_tabfunc_2);
 

@@ -143,6 +143,7 @@ public:
     QHBoxLayout *horizontalLayout_12;
     QPushButton *btn_tabfunc_shakehand;
     QPushButton *btn_tabfunc_grepwawa;
+    QPushButton *btn_tabfunc_persondeteck;
     QGroupBox *groupBox_tabfunc_3;
     QVBoxLayout *verticalLayout_9;
     QGridLayout *gLayout_tabfunc_1;

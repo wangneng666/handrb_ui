@@ -50,7 +50,7 @@ void MainWindow::initRosToptic(){
 //    camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
     forceSensor_subscriber=Node->subscribe<geometry_msgs::Wrench>("daq_data", 1000, &MainWindow::callback_forceSensor_subscriber, this);
     voiceSolveRes_subcriber=Node->subscribe<std_msgs::String>("voiceSolve_res",1,&MainWindow::callback_voiceSolveRes_subcriber, this);
-    personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("pedestrianDetection_image",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
+    personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
     grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
     robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("/UR51/robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
 
@@ -82,6 +82,7 @@ void MainWindow::signalAndSlot() {
     //功能界面
     connect(btn_tabfunc_shakehand,&QPushButton::clicked,this,&MainWindow::slot_btn_tabfunc_shakehand);
     connect(btn_tabfunc_grepwawa,&QPushButton::clicked,this,&MainWindow::slot_btn_tabfunc_grepwawa);
+    connect(btn_tabfunc_persondeteck,&QPushButton::clicked,this,&MainWindow::slot_btn_tabfunc_persondeteck);
     //日志界面
     connect(btn_tabrecord_outRecord,&QPushButton::clicked,this,&MainWindow::slot_btn_tabrecord_outRecord);
     connect(btn_tabrecord_clearRecord,&QPushButton::clicked,this,&MainWindow::slot_btn_tabrecord_clearRecord);
@@ -115,6 +116,7 @@ void MainWindow::showLightColor(QLabel *label, string color) {
     }
 }
 
+//设备连接
 void MainWindow::slot_btn_tabmain_devConnOrRviz() {
     cout<<"点击设备连接按钮"<<endl;
     if(rbQthread_devConnOrRviz->isRunning()){
@@ -124,6 +126,7 @@ void MainWindow::slot_btn_tabmain_devConnOrRviz() {
     }
 }
 
+//开始运行
 void MainWindow::slot_btn_tabmain_beginRun() {
     if(rbQthread_beginRun->isRunning()){
         emit emitQmessageBox(infoLevel::warning,QString("请不要重复运行设备!"));
@@ -132,6 +135,7 @@ void MainWindow::slot_btn_tabmain_beginRun() {
     }
 }
 
+//系统停止
 void MainWindow::slot_btn_tabmain_sysStop() {
     if(rbQthread_sysStop->isRunning()){
         emit emitQmessageBox(infoLevel::warning,QString("请不要重复进行系统停止!"));
@@ -139,7 +143,7 @@ void MainWindow::slot_btn_tabmain_sysStop() {
         rbQthread_sysStop->start();
     }
 }
-
+//系统复位
 void MainWindow::slot_btn_tabmain_sysReset() {
     for(auto thread:rbQthreadList){
         if(thread->isRunning()){
@@ -147,6 +151,45 @@ void MainWindow::slot_btn_tabmain_sysReset() {
         }
     }
     rbQthread_sysReset->start();
+}
+
+//设备连接子线程
+void MainWindow::thread_rbQthread_devConnOrRviz() {
+    switch (cbox_tabmain_chooseMode->currentIndex()){
+        case 0:
+            emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
+            break;
+        case 1:
+            //启动真机连接launch文件
+
+            break;
+        case 2:
+            //启动rviz文件
+            break;
+    }
+}
+//开始运行子线程
+void MainWindow::thread_rbQthread_beginRun() {
+    switch (cbox_tabmain_chooseMode->currentIndex()){
+        case 0:
+            emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
+            break;
+        case 1:
+            //启动真机运行launch文件
+            system("roslaunch hsr_handrobot handRobotGrab.launch");
+            break;
+        case 2:
+            //启动rviz文件运行文件
+            break;
+    }
+}
+//系统停止子线程
+void MainWindow::thread_rbQthread_sysStop() {
+
+}
+//系统复位子线程
+void MainWindow::thread_rbQthread_sysReset() {
+
 }
 
 void MainWindow::slot_btn_rbSetEnable() {
@@ -219,20 +262,17 @@ void MainWindow::slot_combox_chooseMode_Clicked(int index) {
     }
 }
 
-void MainWindow::thread_slot_devConnOrRviz() {
-    int a=0;
-    while(a<10) {
-        a++;
-        sleep(1);
-        cout<<"计时:"<<a<<endl;
-    }
-}
+
 
 void MainWindow::callback_voiceSolveRes_subcriber(std_msgs::String msg) {
     label_tabfunc_voiceValue->setText(QString("当前语音识别结果是:")+QString::fromStdString(msg.data));
 }
 
 void MainWindow::callback_personDetectRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
+    //如果标志为关闭行人检测
+    if(flag_switchPersonDecBtnText){
+        return;
+    }
     const cv_bridge::CvImageConstPtr &ptr = cv_bridge::toCvShare(msg, "bgr8");
     cv::Mat mat = ptr->image;
     QImage qimage = cvMat2QImage(mat);
@@ -362,21 +402,23 @@ void MainWindow::slot_timer_listen_status() {
     mutex_devDetector.unlock();
 }
 
-void MainWindow::thread_rbQthread_devConnOrRviz() {
-
+void MainWindow::slot_btn_tabfunc_persondeteck() {
+    ros::Publisher visionDetech=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
+    std_msgs::Bool msg;
+    if(!flag_switchPersonDecBtnText){
+        //打开行人检测(通过脚本打开)
+        system("rosrun openni2_tracker peopledetection.sh");
+        btn_tabfunc_persondeteck->setText("关闭行人检测");
+    } else{
+        //关闭行人检测
+        msg.data= false;
+        btn_tabfunc_persondeteck->setText("打开行人检测");
+    }
+    visionDetech.publish(msg);
+    flag_switchPersonDecBtnText=!flag_switchPersonDecBtnText;
 }
 
-void MainWindow::thread_rbQthread_beginRun() {
 
-}
-
-void MainWindow::thread_rbQthread_sysStop() {
-
-}
-
-void MainWindow::thread_rbQthread_sysReset() {
-
-}
 
 
 

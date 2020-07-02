@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<launch>
+    <include file="$(find cubeParse)/launch/cube.launch" />
+    <include file="$(find grasp_place)/launch/grasp.launch" />
+    <include file="$(find rubik_cube_solve)/launch/solve.launch" />
+</launch>

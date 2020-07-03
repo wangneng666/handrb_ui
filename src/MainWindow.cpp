@@ -52,6 +52,8 @@ void MainWindow::SysVarInit() {
     rbQthread_grepwawa = new rbQthread();
     rbQthread_grepwawa->setParm(this,&MainWindow::thread_rbQthread_grepwawa);
 
+    rbQthread_handClaw_gesture = new rbQthread();
+
     rbQthreadList.push_back(rbQthread_devConnOrRviz);
     rbQthreadList.push_back(rbQthread_beginRun);
     rbQthreadList.push_back(rbQthread_sysStop);
@@ -230,23 +232,46 @@ void MainWindow::slot_btn_rbReset() {
 }
 
 void MainWindow::slot_btn_gripper_open() {
-
+    if (rbQthread_handClaw_gesture->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "程序正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_handClaw_gesture->setParm3(this,&MainWindow::thread_rbQthread_handClaw_gesture,"open");
+        rbQthread_handClaw_gesture->start();
+    }
 }
 
 void MainWindow::slot_btn_gripper_close() {
-
+    if (rbQthread_handClaw_gesture->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "程序正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_handClaw_gesture->setParm3(this,&MainWindow::thread_rbQthread_handClaw_gesture,"close");
+        rbQthread_handClaw_gesture->start();
+    }
 }
 
 void MainWindow::slot_btn_gripper_OK_Pose() {
-
+    if (rbQthread_handClaw_gesture->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "程序正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_handClaw_gesture->setParm3(this,&MainWindow::thread_rbQthread_handClaw_gesture,"ok");
+        rbQthread_handClaw_gesture->start();
+    }
 }
 
 void MainWindow::slot_btn_gripper_Y_Pose() {
-
+    if (rbQthread_handClaw_gesture->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "程序正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_handClaw_gesture->setParm3(this,&MainWindow::thread_rbQthread_handClaw_gesture,"y");
+        rbQthread_handClaw_gesture->start();
+    }
 }
 
 void MainWindow::slot_btn_rbGoHomePose() {
-
+    std_msgs::Int8 msg;
+    msg.data=0;
+    ros::Publisher tmp_publisher=Node->advertise<std_msgs::Int8>("/back_home",1);
+    tmp_publisher.publish(msg);
 }
 
 void MainWindow::slot_btn_tabfunc_shakehand() {
@@ -483,14 +508,31 @@ void MainWindow::thread_rbQthread_shakehand() {
     emit emitQmessageBox(infoLevel::information,"与人握手信号发出");
     rb_msgAndSrv::rb_DoubleBool srv;
     srv.request.request= true;
-    handClaw_shakeHand_client.call(srv);
+
+    if(handClaw_shakeHand_client.call(srv)){
+    } else{
+        emit emitQmessageBox(infoLevel::warning ,"抓娃娃服务端连接失败!");
+    }
 }
 
 void MainWindow::thread_rbQthread_grepwawa() {
     emit emitQmessageBox(infoLevel::information,"抓娃娃信号发出");
     rb_msgAndSrv::rb_DoubleBool srv;
     srv.request.request= true;
-    handClaw_grabDoll_client.call(srv);
+    if(handClaw_grabDoll_client.call(srv)){
+    } else{
+        emit emitQmessageBox(infoLevel::warning ,"抓娃娃服务端连接失败!");
+    }
+}
+
+void MainWindow::thread_rbQthread_handClaw_gesture(string gesture) {
+    rb_msgAndSrv::rb_string srv;
+    srv.request.data.data=gesture;
+    if(handClaw_gesture_client.call(srv)){
+    } else{
+        emit emitQmessageBox(infoLevel::warning ,"手势功能服务端连接失败!");
+    }
+
 }
 
 

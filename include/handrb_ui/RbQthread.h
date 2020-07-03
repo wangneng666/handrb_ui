@@ -15,9 +15,11 @@ class rbQthread : public QThread{
     Q_OBJECT
 public:
     int mod=0;//模式
+    string str;//
     MainWindow* m;
     void (MainWindow::*f1)();
     void (*f2)();
+    void (MainWindow::*f3)(string );
     //函数回调
     void setParm(MainWindow* m,void (MainWindow::*f1)()){
         this->m=m;
@@ -29,10 +31,19 @@ public:
         this->f2=f2;
         mod=2;
     }
+
+    void setParm3(MainWindow* m,void (MainWindow::*f3)(string),string str){
+        this->m=m;
+        this->f3=f3;
+        this->str=str;
+        mod=3;
+    }
+
     void run(){
         switch (mod){
             case 1:(m->*f1)();break;
             case 2:f2();break;
+            case 3:(m->*f3)(str);break;
         }
     }
 signals:

@@ -14,6 +14,7 @@
 //消息类型头文件
 #include "std_msgs/String.h"
 #include "std_msgs/Bool.h"
+#include "std_msgs/Int8.h"
 #include "rb_msgAndSrv/rb_DoubleBool.h"
 #include "rb_msgAndSrv/rb_string.h"
 #include "sensor_msgs/Image.h"
@@ -78,6 +79,7 @@ private:
     rbQthread* rbQthread_persondeteck;
     rbQthread* rbQthread_shakehand;
     rbQthread* rbQthread_grepwawa;
+    rbQthread* rbQthread_handClaw_gesture;
 
 
 public:
@@ -127,7 +129,8 @@ private:
     void thread_rbQthread_sysReset();
     void thread_rbQthread_persondeteck();//行人检测
     void thread_rbQthread_shakehand();//与人握手
-    void thread_rbQthread_grepwawa();//与人握手
+    void thread_rbQthread_grepwawa();//抓娃娃
+    void thread_rbQthread_handClaw_gesture(string gesture);//手势
     //其他工具函数
     QImage cvMat2QImage(const cv::Mat& mat);
 

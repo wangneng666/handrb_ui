@@ -39,9 +39,12 @@ void MainWindow::SysVarInit() {
     rbQthread_sysStop->setParm(this,&MainWindow::thread_rbQthread_sysStop);
     rbQthread_sysReset = new rbQthread();
     rbQthread_sysReset->setParm(this,&MainWindow::thread_rbQthread_sysReset);
+    rbQthread_persondeteck = new rbQthread();
+    rbQthread_persondeteck->setParm(this,&MainWindow::thread_rbQthread_persondeteck);
     rbQthreadList.push_back(rbQthread_devConnOrRviz);
     rbQthreadList.push_back(rbQthread_beginRun);
     rbQthreadList.push_back(rbQthread_sysStop);
+    rbQthreadList.push_back(rbQthread_persondeteck);
 }
 
 void MainWindow::initRosToptic(){
@@ -176,7 +179,8 @@ void MainWindow::thread_rbQthread_beginRun() {
             break;
         case 1:
             //启动真机运行launch文件
-            system("rosrun openni2_tracker peopledetection.sh");
+//            system("rosrun openni2_tracker peopledetection.sh");
+            system("rosrun openni2_tracker voice.sh");
             //system("roslaunch handrb_ui handRobotGrab.launch");
             break;
         case 2:
@@ -404,23 +408,28 @@ void MainWindow::slot_timer_listen_status() {
 }
 
 void MainWindow::slot_btn_tabfunc_persondeteck() {
-    ros::Publisher visionDetech=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
-    std_msgs::Bool msg;
     if(!flag_switchPersonDecBtnText){
-        //打开行人检测(通过脚本打开)
-        system("rosrun openni2_tracker peopledetection.sh");
+        if(rbQthread_persondeteck->isRunning()){
+            emit emitQmessageBox(infoLevel::information,QString("行人检测运行中"));
+        } else{
+            rbQthread_persondeteck->start();
+        }
         btn_tabfunc_persondeteck->setText("关闭行人检测");
     } else{
         //关闭行人检测
+        ros::Publisher visionDetech=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
+        std_msgs::Bool msg;
         msg.data= false;
         visionDetech.publish(msg);
         btn_tabfunc_persondeteck->setText("打开行人检测");
-
     }
     flag_switchPersonDecBtnText=!flag_switchPersonDecBtnText;
+
 }
 
-
+void MainWindow::thread_rbQthread_persondeteck() {
+    system("rosrun openni2_tracker peopledetection.sh");
+}
 
 
 

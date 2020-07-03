@@ -4,7 +4,6 @@
 //#include "messagehandler.h"
 using namespace std;
 
-
 int main(int args,char** argv){
     //ros节点
     string nodeName = "handrb_ui";

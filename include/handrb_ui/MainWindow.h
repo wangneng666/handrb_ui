@@ -75,6 +75,7 @@ private:
     rbQthread* rbQthread_beginRun;
     rbQthread* rbQthread_sysStop;
     rbQthread* rbQthread_sysReset;
+    rbQthread* rbQthread_persondeteck;
 
 
 public:
@@ -92,7 +93,6 @@ private:
     void slot_btn_tabmain_beginRun();//开始运行
     void slot_btn_tabmain_sysStop();//设备停止
     void slot_btn_tabmain_sysReset();//系统复位
-    void thread_slot_devConnOrRviz();
     //调试界面槽函数
     void slot_btn_rbSetEnable();//机器人上使能
     void slot_btn_rbReset();//机器人复位
@@ -123,6 +123,7 @@ private:
     void thread_rbQthread_beginRun();
     void thread_rbQthread_sysStop();
     void thread_rbQthread_sysReset();
+    void thread_rbQthread_persondeteck();//行人检测
     //其他工具函数
     QImage cvMat2QImage(const cv::Mat& mat);
 

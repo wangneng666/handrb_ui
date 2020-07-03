@@ -76,6 +76,8 @@ private:
     rbQthread* rbQthread_sysStop;
     rbQthread* rbQthread_sysReset;
     rbQthread* rbQthread_persondeteck;
+    rbQthread* rbQthread_shakehand;
+    rbQthread* rbQthread_grepwawa;
 
 
 public:
@@ -124,6 +126,8 @@ private:
     void thread_rbQthread_sysStop();
     void thread_rbQthread_sysReset();
     void thread_rbQthread_persondeteck();//行人检测
+    void thread_rbQthread_shakehand();//与人握手
+    void thread_rbQthread_grepwawa();//与人握手
     //其他工具函数
     QImage cvMat2QImage(const cv::Mat& mat);
 

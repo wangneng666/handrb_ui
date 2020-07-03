@@ -33,18 +33,31 @@ void MainWindow::SysVarInit() {
     //线程初始化
     rbQthread_devConnOrRviz = new rbQthread();
     rbQthread_devConnOrRviz->setParm(this,&MainWindow::thread_rbQthread_devConnOrRviz);
+
     rbQthread_beginRun = new rbQthread();
     rbQthread_beginRun->setParm(this,&MainWindow::thread_rbQthread_beginRun);
+
     rbQthread_sysStop = new rbQthread();
     rbQthread_sysStop->setParm(this,&MainWindow::thread_rbQthread_sysStop);
+
     rbQthread_sysReset = new rbQthread();
     rbQthread_sysReset->setParm(this,&MainWindow::thread_rbQthread_sysReset);
+
     rbQthread_persondeteck = new rbQthread();
     rbQthread_persondeteck->setParm(this,&MainWindow::thread_rbQthread_persondeteck);
+
+    rbQthread_shakehand = new rbQthread();
+    rbQthread_shakehand->setParm(this,&MainWindow::thread_rbQthread_shakehand);
+
+    rbQthread_grepwawa = new rbQthread();
+    rbQthread_grepwawa->setParm(this,&MainWindow::thread_rbQthread_grepwawa);
+
     rbQthreadList.push_back(rbQthread_devConnOrRviz);
     rbQthreadList.push_back(rbQthread_beginRun);
     rbQthreadList.push_back(rbQthread_sysStop);
     rbQthreadList.push_back(rbQthread_persondeteck);
+    rbQthreadList.push_back(rbQthread_shakehand);
+    rbQthreadList.push_back(rbQthread_grepwawa);
 }
 
 void MainWindow::initRosToptic(){
@@ -148,9 +161,15 @@ void MainWindow::slot_btn_tabmain_sysStop() {
 }
 //系统复位
 void MainWindow::slot_btn_tabmain_sysReset() {
+    //先掉机器人使能
+    hsr_rosi_device::SetEnableSrv srv;
+    srv.request.enable= false;
+    RobEnable_client.call(srv);
+    //释放线程资源
     for(auto thread:rbQthreadList){
         if(thread->isRunning()){
             thread->terminate();
+            thread->wait(1000*1);
         }
     }
     rbQthread_sysReset->start();
@@ -190,7 +209,12 @@ void MainWindow::thread_rbQthread_beginRun() {
 }
 //系统停止子线程
 void MainWindow::thread_rbQthread_sysStop() {
-
+    hsr_rosi_device::SetEnableSrv srv;
+    srv.request.enable= false;
+    if(RobEnable_client.call(srv)){
+    } else{
+        emit emitQmessageBox(infoLevel ::warning,"机器人掉使能服务连接失败");
+    }
 }
 //系统复位子线程
 void MainWindow::thread_rbQthread_sysReset() {
@@ -226,19 +250,43 @@ void MainWindow::slot_btn_rbGoHomePose() {
 }
 
 void MainWindow::slot_btn_tabfunc_shakehand() {
-
+    if(rbQthread_shakehand->isRunning()){
+        emit emitQmessageBox(infoLevel::warning ,"与人握手程序运行中,请不要重复启动!");
+    } else{
+        rbQthread_shakehand->start();
+    }
 }
 
 void MainWindow::slot_btn_tabfunc_grepwawa() {
-
+    if(rbQthread_grepwawa->isRunning()){
+        emit emitQmessageBox(infoLevel::warning ,"抓娃娃程序运行中,请不要重复启动!");
+    } else{
+        rbQthread_grepwawa->start();
+    }
 }
 
 void MainWindow::slot_btn_tabrecord_outRecord() {
-
+    QString file_path = QFileDialog::getOpenFileName(this,"选择文件",logPath, "Files(*.log)");
+    QString displayString;
+    QFile file(file_path);
+    if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        return;
+//        qDebug()<<"Can't open the file!"<<endl;
+    }
+    while(!file.atEnd())
+    {
+        QByteArray line = file.readLine();
+        QString str(line);
+        displayString.append(str);
+    }
+    file.close();
+    plainText_tabrecord_1->clear();
+    plainText_tabrecord_1->setPlainText(displayString);
 }
 
 void MainWindow::slot_btn_tabrecord_clearRecord() {
-
+    plainText_tabrecord_1->clear();
 }
 
 void MainWindow::slot_combox_chooseMode_Clicked(int index) {
@@ -429,6 +477,20 @@ void MainWindow::slot_btn_tabfunc_persondeteck() {
 
 void MainWindow::thread_rbQthread_persondeteck() {
     system("rosrun openni2_tracker peopledetection.sh");
+}
+
+void MainWindow::thread_rbQthread_shakehand() {
+    emit emitQmessageBox(infoLevel::information,"与人握手信号发出");
+    rb_msgAndSrv::rb_DoubleBool srv;
+    srv.request.request= true;
+    handClaw_shakeHand_client.call(srv);
+}
+
+void MainWindow::thread_rbQthread_grepwawa() {
+    emit emitQmessageBox(infoLevel::information,"抓娃娃信号发出");
+    rb_msgAndSrv::rb_DoubleBool srv;
+    srv.request.request= true;
+    handClaw_grabDoll_client.call(srv);
 }
 
 

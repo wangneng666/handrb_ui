@@ -4,4 +4,6 @@
 <!--
     <node pkg="openni2_tracker" type="hello" name="shakehand_listener" output="screen" />
  -->
+<include file="$(find pick_place_bridge)/launch/bringup.launch" />
+<include file="$(find reception_robot)/launch/fake_bringup.launch" />
 </launch>

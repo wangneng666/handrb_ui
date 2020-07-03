@@ -70,6 +70,7 @@ private:
     ros::Subscriber robStatus_subscriber;
     ros::Subscriber camera_subscriber;
     ros::Subscriber forceSensor_subscriber;
+    ros::Publisher visionDetech;
     //线程句柄
     vector<rbQthread*> rbQthreadList;
     rbQthread* rbQthread_devConnOrRviz;

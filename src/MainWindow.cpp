@@ -71,6 +71,7 @@ void MainWindow::initRosToptic(){
     personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
     grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
     robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("/UR51/robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
+    visionDetech=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
 
     //服务
     RobReset_client = Node->serviceClient<hsr_rosi_device::ClearFaultSrv>("/UR51/clear_robot_fault");
@@ -189,6 +190,7 @@ void MainWindow::thread_rbQthread_devConnOrRviz() {
             break;
         case 2:
             //启动rviz文件
+            system("roslaunch co605_fight_moveit_config demo.launch");
             break;
     }
 }
@@ -201,10 +203,11 @@ void MainWindow::thread_rbQthread_beginRun() {
         case 1:
             //启动真机运行launch文件
 //            system("rosrun openni2_tracker peopledetection.sh");
-            system("rosrun openni2_tracker voice.sh");
-            //system("roslaunch handrb_ui handRobotGrab.launch");
+            //system("rosrun openni2_tracker voice.sh");
+            system("roslaunch handrb_ui handRobotGrab.launch");
             break;
         case 2:
+            system("roslaunch handrb_ui handRobotGrab.launch");
             //启动rviz文件运行文件
             break;
     }
@@ -348,7 +351,7 @@ void MainWindow::callback_voiceSolveRes_subcriber(std_msgs::String msg) {
 
 void MainWindow::callback_personDetectRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
     //如果标志为关闭行人检测
-    if(flag_switchPersonDecBtnText){
+    if(!flag_switchPersonDecBtnText){
         return;
     }
     const cv_bridge::CvImageConstPtr &ptr = cv_bridge::toCvShare(msg, "bgr8");
@@ -363,7 +366,9 @@ void MainWindow::callback_personDetectRes_subcriber(const sensor_msgs::Image::Co
 void MainWindow::callback_grabDollImagRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
     const cv_bridge::CvImageConstPtr &ptr = cv_bridge::toCvShare(msg, "bgr8");
     cv::Mat mat = ptr->image;
-    QImage qimage = cvMat2QImage(mat);
+    QImage qimage = cvMat2QImage(mat)
+    
+    ;
     QPixmap tmp_pixmap = QPixmap::fromImage(qimage);
     QPixmap new_pixmap = tmp_pixmap.scaled(label_tabfunc_image->width(), label_tabfunc_image->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
 //    QPixmap tmp_pixmap = pixmap1.scaled(label_picture1->width(), label_picture1->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 按比例缩放
@@ -490,7 +495,6 @@ void MainWindow::slot_btn_tabfunc_persondeteck() {
         btn_tabfunc_persondeteck->setText("关闭行人检测");
     } else{
         //关闭行人检测
-        ros::Publisher visionDetech=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
         std_msgs::Bool msg;
         msg.data= false;
         visionDetech.publish(msg);

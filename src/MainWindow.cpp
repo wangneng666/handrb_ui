@@ -30,6 +30,12 @@ void MainWindow::SysVarInit() {
     connect(Timer_listen_status, &QTimer::timeout, this, &MainWindow::slot_timer_listen_status);
     Timer_listen_status->start();
 
+    Timer_listen_SysResetThread = new QTimer(this);
+    Timer_listen_SysResetThread->setInterval(5000);
+    connect(Timer_listen_SysResetThread, &QTimer::timeout, this, &MainWindow::slot_timer_listen_SysResetThread);
+
+    //初始化节点观察者
+    ob_node.setparm(this);
     //线程初始化
     rbQthread_devConnOrRviz = new rbQthread();
     rbQthread_devConnOrRviz->setParm(this,&MainWindow::thread_rbQthread_devConnOrRviz);
@@ -64,6 +70,8 @@ void MainWindow::SysVarInit() {
 
 void MainWindow::initRosToptic(){
     //话题
+    rbGoHome_publisher=Node->advertise<std_msgs::Int8>("/back_home",1);
+    visionDetech_publisher=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
     camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
 //    camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
     forceSensor_subscriber=Node->subscribe<geometry_msgs::Wrench>("daq_data", 1000, &MainWindow::callback_forceSensor_subscriber, this);
@@ -71,7 +79,6 @@ void MainWindow::initRosToptic(){
     personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
     grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
     robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("/UR51/robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
-    visionDetech=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
 
     //服务
     RobReset_client = Node->serviceClient<hsr_rosi_device::ClearFaultSrv>("/UR51/clear_robot_fault");
@@ -108,31 +115,13 @@ void MainWindow::signalAndSlot() {
 /*************************************************************************************************/
 
 /*********************************自定义信号与槽函数绑定*************************************************/
+    connect(this, &MainWindow::emitTextControl,this, &MainWindow::displayTextControl);
     connect(this, &MainWindow::emitLightColor,this, &MainWindow::showLightColor);
+    connect(this, SIGNAL(emitQmessageBox(infoLevel ,QString)), this,SLOT(showQmessageBox(infoLevel,QString)));  //将自定义槽连接到自定义信号
+
 //    connect(rbQthread_devConnOrRviz, SIGNAL(signal_SendMsgBox(infoLevel ,QString)), this,SLOT(thread_slot_devConnOrRviz()));
 
 /*************************************************************************************************/
-}
-
-void MainWindow::displayTextControl(QString text) {
-
-}
-
-void MainWindow::showQmessageBox(infoLevel level, QString info) {
-    switch (level){
-        case infoLevel ::information:
-            QMessageBox::information(this,"提示",info,QMessageBox::Ok);break;
-        case infoLevel ::warning:
-            QMessageBox::warning(this,"警告",info,QMessageBox::Ok);break;
-    }
-}
-
-void MainWindow::showLightColor(QLabel *label, string color) {
-    if(color=="red"){
-        label->setPixmap(fitpixmap_redLight);
-    } else if(color=="green"){
-        label->setPixmap(fitpixmap_greenLight);
-    }
 }
 
 //设备连接
@@ -142,6 +131,7 @@ void MainWindow::slot_btn_tabmain_devConnOrRviz() {
         emit emitQmessageBox(infoLevel::warning,QString("请不要重复连接设备!"));
     } else{
         rbQthread_devConnOrRviz->start();
+        LOG("RUNINFO")->logInfoMessage("设备连接运行中");
     }
 }
 
@@ -151,6 +141,7 @@ void MainWindow::slot_btn_tabmain_beginRun() {
         emit emitQmessageBox(infoLevel::warning,QString("请不要重复运行设备!"));
     } else{
         rbQthread_beginRun->start();
+        LOG("RUNINFO")->logInfoMessage("设备开始运行中");
     }
 }
 
@@ -160,22 +151,49 @@ void MainWindow::slot_btn_tabmain_sysStop() {
         emit emitQmessageBox(infoLevel::warning,QString("请不要重复进行系统停止!"));
     } else{
         rbQthread_sysStop->start();
+        LOG("RUNINFO")->logInfoMessage("设备停止");
     }
 }
-//系统复位
+//系统复位 goto 等5s定时重启
 void MainWindow::slot_btn_tabmain_sysReset() {
-    //先掉机器人使能
-    hsr_rosi_device::SetEnableSrv srv;
-    srv.request.enable= false;
-    RobEnable_client.call(srv);
-    //释放线程资源
-    for(auto thread:rbQthreadList){
-        if(thread->isRunning()){
-            thread->terminate();
-            thread->wait(1000*1);
+    if (rbQthread_sysReset->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, QString("程序正在执行中,请不要重复启动!"));
+    } else {
+        //先掉机器人使能
+        hsr_rosi_device::SetEnableSrv srv;
+        srv.request.enable= false;
+        RobEnable_client.call(srv);
+        //释放线程资源
+        for(auto thread:rbQthreadList){
+            if(thread->isRunning()){
+                thread->terminate();
+                thread->wait(1000*1);
+                cout<<"释放线程资源"<<endl;
+            }
         }
+        //启动复位线程,此线程可重复使用
+//        rbQthread_sysReset->start();
+        //开辟临时线程
+        rbQthread* tmp_thread=new rbQthread();
+        tmp_thread->setParm4([&]
+        {
+         flag_havedReset= true;
+         ob_node.shutdownNode();
+         system("rosnode kill -a");
+         sleep(1);
+         system("killall rosmaster");
+         sleep(1);
+         system("roscore");
+        }
+        );
+        //5s后复位按钮才能再次使用
+        connect(tmp_thread,SIGNAL(started()),this,SLOT(slot_rbQthread_listenSysResetStart()));
+        connect(tmp_thread,SIGNAL(finished()),tmp_thread,SLOT(deleteLater()));
+        connect(tmp_thread,SIGNAL(finished()),this,SLOT(slot_rbQthread_listenFinish()));
+        tmp_thread->start();
+        LOG("RUNINFO")->logInfoMessage("系统复位");
+
     }
-    rbQthread_sysReset->start();
 }
 
 //设备连接子线程
@@ -201,13 +219,16 @@ void MainWindow::thread_rbQthread_beginRun() {
             emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
             break;
         case 1:
+            cout<<"进来了"<<endl;
             //启动真机运行launch文件
-//            system("rosrun openni2_tracker peopledetection.sh");
-            //system("rosrun openni2_tracker voice.sh");
-            system("roslaunch handrb_ui handRobotGrab.launch");
+//            system("roslaunch handrb_ui handRobotGrab.launch");
+            //如果复位过程序,增需要重新启动本节点
+            if(flag_havedReset){ob_node.rebootUiNode();}
             break;
         case 2:
-            system("roslaunch handrb_ui handRobotGrab.launch");
+            //如果复位过程序,增需要重新启动本节点
+            if(flag_havedReset){ob_node.rebootUiNode();}
+//            system("roslaunch handrb_ui handRobotGrab.launch");
             //启动rviz文件运行文件
             break;
     }
@@ -223,15 +244,36 @@ void MainWindow::thread_rbQthread_sysStop() {
 }
 //系统复位子线程
 void MainWindow::thread_rbQthread_sysReset() {
-
+//    flag_havedReset= true;
+//    ob_node.shutdownNode();
+//    system("rosnode kill -a");
+//    sleep(1);
+//    system("killall rosmaster");
+//    sleep(1);
+//    system("roscore");
+//    sleep(1);
 }
 
 void MainWindow::slot_btn_rbSetEnable() {
-//    LOG("ERRINFO")->logWarnMessage("右机器人报警");
+    flag_rbEnable=!flag_rbEnable;
+    hsr_rosi_device::SetEnableSrv srv;
+    if(flag_rbEnable){
+        srv.request.enable= true;
+        RobEnable_client.call(srv);
+        btn_rbSetEnable->setText("机器人下使能");
+        LOG("RUNINFO")->logInfoMessage("机器人下使能");
+    } else{
+        srv.request.enable= false;
+        RobEnable_client.call(srv);
+        btn_rbSetEnable->setText("机器人上使能");
+        LOG("RUNINFO")->logInfoMessage("机器人上使能");
+
+    }
 }
 
 void MainWindow::slot_btn_rbReset() {
-
+    hsr_rosi_device::ClearFaultSrv srv;
+    RobReset_client.call(srv);
 }
 
 void MainWindow::slot_btn_gripper_open() {
@@ -273,8 +315,7 @@ void MainWindow::slot_btn_gripper_Y_Pose() {
 void MainWindow::slot_btn_rbGoHomePose() {
     std_msgs::Int8 msg;
     msg.data=0;
-    ros::Publisher tmp_publisher=Node->advertise<std_msgs::Int8>("/back_home",1);
-    tmp_publisher.publish(msg);
+    rbGoHome_publisher.publish(msg);
 }
 
 void MainWindow::slot_btn_tabfunc_shakehand() {
@@ -346,7 +387,7 @@ void MainWindow::slot_combox_chooseMode_Clicked(int index) {
 
 
 void MainWindow::callback_voiceSolveRes_subcriber(std_msgs::String msg) {
-    label_tabfunc_voiceValue->setText(QString("当前语音识别结果是:")+QString::fromStdString(msg.data));
+    label_tabfunc_voiceValue->setText(QString("当前语音识别结果:")+QString::fromStdString(msg.data));
 }
 
 void MainWindow::callback_personDetectRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
@@ -366,9 +407,7 @@ void MainWindow::callback_personDetectRes_subcriber(const sensor_msgs::Image::Co
 void MainWindow::callback_grabDollImagRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
     const cv_bridge::CvImageConstPtr &ptr = cv_bridge::toCvShare(msg, "bgr8");
     cv::Mat mat = ptr->image;
-    QImage qimage = cvMat2QImage(mat)
-    
-    ;
+    QImage qimage = cvMat2QImage(mat);
     QPixmap tmp_pixmap = QPixmap::fromImage(qimage);
     QPixmap new_pixmap = tmp_pixmap.scaled(label_tabfunc_image->width(), label_tabfunc_image->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
 //    QPixmap tmp_pixmap = pixmap1.scaled(label_picture1->width(), label_picture1->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 按比例缩放
@@ -460,6 +499,26 @@ QImage MainWindow::cvMat2QImage(const cv::Mat &mat) {
         return QImage();
     }
 }
+void MainWindow::displayTextControl(QString text) {
+    plainText_tabrecord_1->appendPlainText(text);
+}
+
+void MainWindow::showQmessageBox(infoLevel level, QString info) {
+    switch (level){
+        case infoLevel ::information:
+            QMessageBox::information(this,"提示",info,QMessageBox::Ok);break;
+        case infoLevel ::warning:
+            QMessageBox::warning(this,"警告",info,QMessageBox::Ok);break;
+    }
+}
+
+void MainWindow::showLightColor(QLabel *label, string color) {
+    if(color=="red"){
+        label->setPixmap(fitpixmap_redLight);
+    } else if(color=="green"){
+        label->setPixmap(fitpixmap_greenLight);
+    }
+}
 
 void MainWindow::slot_timer_listen_status() {
     mutex_devDetector.lock();
@@ -486,6 +545,10 @@ void MainWindow::slot_timer_listen_status() {
 }
 
 void MainWindow::slot_btn_tabfunc_persondeteck() {
+    mutex_devDetector.lock();
+    cameraConn_Detector.lifeNum=100;
+    cameraConn_Detector.status= true;
+    mutex_devDetector.unlock();
     if(!flag_switchPersonDecBtnText){
         if(rbQthread_persondeteck->isRunning()){
             emit emitQmessageBox(infoLevel::information,QString("行人检测运行中"));
@@ -497,7 +560,7 @@ void MainWindow::slot_btn_tabfunc_persondeteck() {
         //关闭行人检测
         std_msgs::Bool msg;
         msg.data= false;
-        visionDetech.publish(msg);
+        visionDetech_publisher.publish(msg);
         btn_tabfunc_persondeteck->setText("打开行人检测");
     }
     flag_switchPersonDecBtnText=!flag_switchPersonDecBtnText;
@@ -514,8 +577,13 @@ void MainWindow::thread_rbQthread_shakehand() {
     srv.request.request= true;
 
     if(handClaw_shakeHand_client.call(srv)){
+        if(srv.response.respond){
+            emit emitQmessageBox(infoLevel::information ,"机器人握手姿势准备好!");
+        } else{
+            emit emitQmessageBox(infoLevel::warning ,"机器人握手姿势运动出错!");
+        }
     } else{
-        emit emitQmessageBox(infoLevel::warning ,"抓娃娃服务端连接失败!");
+        emit emitQmessageBox(infoLevel::warning ,"与人握手服务端连接失败!");
     }
 }
 
@@ -539,5 +607,28 @@ void MainWindow::thread_rbQthread_handClaw_gesture(string gesture) {
 
 }
 
+//系统复位线程启动
+void MainWindow::slot_rbQthread_listenSysResetStart() {
+    cout<<"进入 slot_rbQthread_listenSysResetStart"<<endl;
+    btn_tabmain_sysReset->setEnabled(false);
+    Timer_listen_SysResetThread->start();
+}
 
+void MainWindow::slot_rbQthread_listenFinish() {
+    cout<<"线程资源释放"<<endl;
+}
+
+void MainWindow::slot_timer_listen_SysResetThread() {
+    cout<<"进入slot_timer_listen_SysResetThread"<<endl;
+    btn_tabmain_sysReset->setEnabled(true);
+    Timer_listen_SysResetThread->stop();
+}
+
+//重启UI节点
+void observer_rebootUiNode::rebootUiNode(){
+    sp=new ros::AsyncSpinner(1);
+    sp->start();
+    ros::start();
+    mainwindow->initRosToptic();
+}
 

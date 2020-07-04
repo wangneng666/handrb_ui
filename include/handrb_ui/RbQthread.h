@@ -20,6 +20,7 @@ public:
     void (MainWindow::*f1)();
     void (*f2)();
     void (MainWindow::*f3)(string );
+    std::function<void ()>  f4;
     //函数回调
     void setParm(MainWindow* m,void (MainWindow::*f1)()){
         this->m=m;
@@ -39,11 +40,16 @@ public:
         mod=3;
     }
 
+    void setParm4(std::function<void ()> f4){
+        this->f4=f4;
+        mod=4;
+    }
     void run(){
         switch (mod){
             case 1:(m->*f1)();break;
             case 2:f2();break;
             case 3:(m->*f3)(str);break;
+            case 4:f4();break;
         }
     }
 signals:

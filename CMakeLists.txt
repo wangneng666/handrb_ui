@@ -52,13 +52,14 @@ catkin_package(
 CATKIN_DEPENDS message_runtime
 )
 
-
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
     include/handrb_ui
     3rd/log4_cplus/include
 )
+
+link_directories("3rd/log4_cplus/lib")
 
 #
 add_executable(main
@@ -71,8 +72,8 @@ add_executable(main
 
 target_link_libraries(
         main
-        #log4cplus
-        #logTest
+        log4cplus
+        logTest
         ${catkin_LIBRARIES}
         ${QT_LIBRARIES}
         ${OpenCV_LIBS}

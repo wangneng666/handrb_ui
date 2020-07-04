@@ -5,7 +5,7 @@
 #include "BaseWindow.h"
 #include "RbQthread.h"
 #include "gloalVal.h"
-
+#include "logmanager.h"
 //opencv库
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
@@ -34,8 +34,30 @@ struct  devDetector{
     string name; //设备名
     int lifeNum; //生命值
     bool status; //状态
-    QLabel* lable_showStatus;
+    QLabel* lable_showStatus;//状态显示lable
 };
+
+//观察者模式(管理节点重启与关闭)
+class observer_rebootUiNode{
+public:
+    MainWindow* mainwindow;
+    ros::AsyncSpinner* sp= nullptr;
+public:
+    void setparm(MainWindow* mainwindow){
+        this->mainwindow=mainwindow;
+    }
+    //释放内存
+    void shutdownNode(){
+        ros::shutdown();
+        if(sp!= nullptr){
+            delete sp;
+            sp= nullptr;
+        }
+    }
+    //重启ui节点
+    void rebootUiNode();
+};
+
 
 class MainWindow: public BaseWindow {
 Q_OBJECT
@@ -47,6 +69,10 @@ private:
     int index_sysMode=0;
     QMutex mutex_devDetector;
     bool flag_switchPersonDecBtnText= false;
+    bool flag_havedReset= false;
+    bool flag_rbEnable= false;
+    //加入节点观察者
+    observer_rebootUiNode ob_node;
     //设备监控
     vector<devDetector*> devDetectorList;//设备监控器列表
     devDetector RobConn_Detector{"RobConn_Detector",0, false,label_tabmain_rbConnStatusValue}; //机器人连接状态
@@ -57,6 +83,7 @@ private:
     devDetector forceSensorConn_Detector{"forceSensorConn_Detector",0, false,label_tabmain_TsensorStatusValue}; //六轴力传感器连接状态
     //定时器
     QTimer* Timer_listen_status;
+    QTimer* Timer_listen_SysResetThread;
     //ros消息对象
     ros::ServiceClient RobReset_client;
     ros::ServiceClient RobEnable_client;
@@ -70,7 +97,8 @@ private:
     ros::Subscriber robStatus_subscriber;
     ros::Subscriber camera_subscriber;
     ros::Subscriber forceSensor_subscriber;
-    ros::Publisher visionDetech;
+    ros::Publisher visionDetech_publisher;
+    ros::Publisher rbGoHome_publisher;
     //线程句柄
     vector<rbQthread*> rbQthreadList;
     rbQthread* rbQthread_devConnOrRviz;
@@ -123,6 +151,7 @@ private:
     void callback_forceSensor_subscriber(geometry_msgs::Wrench msg);
     //定时器槽函数
     void slot_timer_listen_status();
+    void slot_timer_listen_SysResetThread();
     //线程函数
     void thread_rbQthread_devConnOrRviz();
     void thread_rbQthread_beginRun();
@@ -146,6 +175,9 @@ private slots:
     void showQmessageBox(infoLevel level,QString info);
     void showLightColor(QLabel* label,string color);
     void slot_combox_chooseMode_Clicked(int index);
+    void slot_rbQthread_listenSysResetStart();//监听系统复位线程启动
+    void slot_rbQthread_listenFinish();//监听线程资源释放
+
 };
 
 

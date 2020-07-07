@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <launch>
     <include file="$(find hsr_bringup)/launch/co605_fight_go.launch" />
-    <node pkg="daq_ros_driver" type="driver" name="daq_ros_driver" output="screen" />
-
 </launch>

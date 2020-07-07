@@ -217,16 +217,15 @@ void MainWindow::thread_rbQthread_devConnOrRviz() {
         case 1:
             //启动真机连接launch文件
             index_SysRunStep=1;
-//            system("roslaunch co605_fight_moveit_config demo.launch");
             system("roslaunch handrb_ui devconn.launch");
             break;
         case 2:
             //启动rviz文件
             index_SysRunStep=1;
             system("roslaunch handrb_ui devconn.launch");
-//            system("roslaunch co605_fight_moveit_config demo.launch");
             break;
     }
+//            system("roslaunch co605_fight_moveit_config demo.launch");
 }
 //开始运行子线程
 void MainWindow::thread_rbQthread_beginRun() {
@@ -248,7 +247,7 @@ void MainWindow::thread_rbQthread_beginRun() {
             //启动rviz文件运行文件
             break;
     }
-
+    cout<<"开始运行模式"<<endl;
     switch (cbox_tabmain_chooseMode->currentIndex()){
         case 0:
             emit emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));

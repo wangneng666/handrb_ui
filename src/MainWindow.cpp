@@ -217,11 +217,14 @@ void MainWindow::thread_rbQthread_devConnOrRviz() {
         case 1:
             //启动真机连接launch文件
             index_SysRunStep=1;
+//            system("roslaunch co605_fight_moveit_config demo.launch");
+            system("roslaunch handrb_ui devconn.launch");
             break;
         case 2:
             //启动rviz文件
             index_SysRunStep=1;
-            system("roslaunch co605_fight_moveit_config demo.launch");
+            system("roslaunch handrb_ui devconn.launch");
+//            system("roslaunch co605_fight_moveit_config demo.launch");
             break;
     }
 }
@@ -232,13 +235,15 @@ void MainWindow::thread_rbQthread_beginRun() {
             emit emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
             break;
         case 1:
-            cout<<"进来了"<<endl;
+            system("rosservice call /set_mode_srv \"mode: 1\"");
             //启动真机运行launch文件
             system("roslaunch handrb_ui handRobotGrab.launch");
             //如果复位过程序,增需要重新启动本节点
             if(flag_havedReset){ob_node.rebootUiNode();}
             break;
         case 2:
+            system("rosservice call /set_mode_srv \"mode: 1\"");
+            //启动rviz程序
             //如果复位过程序,增需要重新启动本节点
             if(flag_havedReset){ob_node.rebootUiNode();}
             system("roslaunch handrb_ui handRobotGrab.launch");

@@ -107,6 +107,7 @@ public:
     QGroupBox *groupBox_tabmain_2;
     QHBoxLayout *horizontalLayout_6;
     QComboBox *cbox_tabmain_chooseMode;
+    QComboBox *cbox_tabmain_robmode;
     QHBoxLayout *hLayout_tabmain_3;
     QGroupBox *groupBox_tabmain_3;
     QHBoxLayout *horizontalLayout_7;
@@ -130,6 +131,7 @@ public:
     QGroupBox *groupBox_tabdebug_3;
     QHBoxLayout *horizontalLayout_20;
     QPushButton *btn_rbGoHomePose;
+
     //功能界面
     QWidget *tab_func;
     QHBoxLayout *horizontalLayout_9;

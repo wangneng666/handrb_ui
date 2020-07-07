@@ -249,7 +249,17 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     cbox_tabmain_chooseMode->setFixedSize(COMBOX_W,COMBOX_H);
     cbox_tabmain_chooseMode->setLayoutDirection(Qt::LeftToRight);
 
+    cbox_tabmain_robmode = new QComboBox(groupBox_tabmain_2);
+    cbox_tabmain_robmode->addItem(QString());
+    cbox_tabmain_robmode->addItem(QString());
+    cbox_tabmain_robmode->addItem(QString());
+    cbox_tabmain_robmode->setObjectName(QString::fromUtf8("cbox_tabmain_robmode"));
+    cbox_tabmain_robmode->setMaximumSize(QSize(200, 50));
+    cbox_tabmain_robmode->setFixedSize(COMBOX_W,COMBOX_H);
+    cbox_tabmain_robmode->setLayoutDirection(Qt::LeftToRight);
+
     horizontalLayout_6->addWidget(cbox_tabmain_chooseMode);
+    horizontalLayout_6->addWidget(cbox_tabmain_robmode);
 
 
     hLayout_tabmain_2->addWidget(groupBox_tabmain_2);
@@ -610,6 +620,10 @@ void BaseWindow::retranslateUi(QMainWindow *MainWindow) {
     cbox_tabmain_chooseMode->setItemText(0, QApplication::translate("MainWindow", "\350\257\267\351\200\211\346\213\251\350\277\220\350\241\214\346\250\241\345\274\217", nullptr));
     cbox_tabmain_chooseMode->setItemText(1, QApplication::translate("MainWindow", "\347\234\237\346\234\272\350\277\220\350\241\214", nullptr));
     cbox_tabmain_chooseMode->setItemText(2, QApplication::translate("MainWindow", "\344\273\277\347\234\237\350\277\220\350\241\214", nullptr));
+
+    cbox_tabmain_robmode->setItemText(0, QApplication::translate("MainWindow", "\346\234\272\345\231\250\344\272\272\346\250\241\345\274\217", nullptr));
+    cbox_tabmain_robmode->setItemText(1, QApplication::translate("MainWindow", "\347\202\271\345\212\250\346\250\241\345\274\2170", nullptr));
+    cbox_tabmain_robmode->setItemText(2, QApplication::translate("MainWindow", "\351\232\217\345\212\250\346\250\241\345\274\2171", nullptr));
 
     groupBox_tabmain_3->setTitle(QApplication::translate("MainWindow", "\347\263\273\347\273\237\345\212\237\350\203\275", nullptr));
     btn_tabmain_devConnOrRviz->setText(QApplication::translate("MainWindow", "\350\256\276\345\244\207\350\277\236\346\216\245", nullptr));

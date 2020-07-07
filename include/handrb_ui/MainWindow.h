@@ -113,7 +113,6 @@ private:
     rbQthread* rbQthread_grepwawa;
     rbQthread* rbQthread_handClaw_gesture;
 
-
 public:
     //初始化Ros话题与服务
     void initRosToptic();

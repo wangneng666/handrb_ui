@@ -83,11 +83,11 @@ void MainWindow::initRosToptic(){
     voiceSolveRes_subcriber=Node->subscribe<std_msgs::String>("voiceSolve_res",1,&MainWindow::callback_voiceSolveRes_subcriber, this);
     personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
     grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
-    robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("/UR51/robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
+    robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
 
     //服务
-    RobReset_client = Node->serviceClient<hsr_rosi_device::ClearFaultSrv>("/UR51/clear_robot_fault");
-    RobEnable_client = Node->serviceClient<hsr_rosi_device::SetEnableSrv>("/UR51/set_robot_enable");
+    RobReset_client = Node->serviceClient<hsr_rosi_device::ClearFaultSrv>("clear_robot_fault");
+    RobEnable_client = Node->serviceClient<hsr_rosi_device::SetEnableSrv>("set_robot_enable");
     handClaw_gesture_client = Node->serviceClient<rb_msgAndSrv::rb_string>("handClaw_gesture");
     handClaw_shakeHand_client = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("handClaw_shakeHand");
     handClaw_grabDoll_client = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("handClaw_grabDoll");
@@ -230,19 +230,36 @@ void MainWindow::thread_rbQthread_devConnOrRviz() {
 }
 //开始运行子线程
 void MainWindow::thread_rbQthread_beginRun() {
+    switch (cbox_tabmain_robmode->currentIndex()){
+        case 0:
+            emit emitQmessageBox(infoLevel::information,QString("请选择机器人模式!"));
+            return;
+        case 1:
+            system("rosservice call /set_mode_srv \"mode: 0\"");
+            break;
+        case 2:
+            //上使能
+            hsr_rosi_device::ClearFaultSrv srv_clearF;
+            hsr_rosi_device::SetEnableSrv srv2_setE;
+            RobReset_client.call(srv_clearF);
+            RobReset_client.call(srv2_setE);
+            system("rosservice call /set_mode_srv \"mode: 1\"");
+            //启动rviz程序
+            //启动rviz文件运行文件
+            break;
+    }
+
     switch (cbox_tabmain_chooseMode->currentIndex()){
         case 0:
             emit emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
             break;
         case 1:
-            system("rosservice call /set_mode_srv \"mode: 1\"");
             //启动真机运行launch文件
             system("roslaunch handrb_ui handRobotGrab.launch");
             //如果复位过程序,增需要重新启动本节点
             if(flag_havedReset){ob_node.rebootUiNode();}
             break;
         case 2:
-            system("rosservice call /set_mode_srv \"mode: 1\"");
             //启动rviz程序
             //如果复位过程序,增需要重新启动本节点
             if(flag_havedReset){ob_node.rebootUiNode();}
@@ -253,6 +270,7 @@ void MainWindow::thread_rbQthread_beginRun() {
 }
 //系统停止子线程
 void MainWindow::thread_rbQthread_sysStop() {
+
     hsr_rosi_device::SetEnableSrv srv;
     srv.request.enable= false;
     if(RobEnable_client.call(srv)){

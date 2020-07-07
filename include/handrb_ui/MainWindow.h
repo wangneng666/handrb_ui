@@ -109,6 +109,7 @@ private:
     rbQthread* rbQthread_sysStop;
     rbQthread* rbQthread_sysReset;
     rbQthread* rbQthread_persondeteck;
+    rbQthread* rbQthread_voicedeteck;
     rbQthread* rbQthread_shakehand;
     rbQthread* rbQthread_grepwawa;
     rbQthread* rbQthread_handClaw_gesture;
@@ -140,6 +141,7 @@ private:
     void slot_btn_tabfunc_shakehand();//机器人握手
     void slot_btn_tabfunc_grepwawa();//机器人抓娃娃
     void slot_btn_tabfunc_persondeteck();//行人检测
+    void slot_btn_tabfunc_voiceDetect();//语音检测
     //日志界面槽函数
     void slot_btn_tabrecord_outRecord();//导出日志
     void slot_btn_tabrecord_clearRecord();//清除日志
@@ -161,6 +163,7 @@ private:
     void thread_rbQthread_sysStop();
     void thread_rbQthread_sysReset();
     void thread_rbQthread_persondeteck();//行人检测
+    void thread_rbQthread_voicedeteck();//语音检测
     void thread_rbQthread_shakehand();//与人握手
     void thread_rbQthread_grepwawa();//抓娃娃
     void thread_rbQthread_handClaw_gesture(string gesture);//手势

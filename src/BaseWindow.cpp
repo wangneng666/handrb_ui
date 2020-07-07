@@ -448,12 +448,21 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     horizontalLayout_12->setSpacing(6);
     horizontalLayout_12->setContentsMargins(11, 11, 11, 11);
     horizontalLayout_12->setObjectName(QString::fromUtf8("horizontalLayout_12"));
+
     btn_tabfunc_shakehand = new QPushButton(groupBox_tabfunc_2);
     btn_tabfunc_shakehand->setObjectName(QString::fromUtf8("btn_tabfunc_shakehand"));
     btn_tabfunc_shakehand->setMaximumSize(QSize(150, 50));
     btn_tabfunc_shakehand->setFixedSize(BTN_W,BTN_H);
     btn_tabfunc_shakehand->setLayoutDirection(Qt::LeftToRight);
 
+    btn_tabfunc_voiceDetect = new QPushButton(groupBox_tabfunc_2);
+    btn_tabfunc_voiceDetect->setObjectName(QString::fromUtf8("btn_tabfunc_voiceDetect"));
+    btn_tabfunc_voiceDetect->setMaximumSize(QSize(150, 50));
+    btn_tabfunc_voiceDetect->setFixedSize(BTN_W,BTN_H);
+    btn_tabfunc_voiceDetect->setLayoutDirection(Qt::LeftToRight);
+    btn_tabfunc_voiceDetect->setText(QString("语音检测"));
+
+    horizontalLayout_12->addWidget(btn_tabfunc_voiceDetect);
     horizontalLayout_12->addWidget(btn_tabfunc_shakehand);
 
     btn_tabfunc_grepwawa = new QPushButton(groupBox_tabfunc_2);

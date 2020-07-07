@@ -56,6 +56,9 @@ void MainWindow::SysVarInit() {
     rbQthread_persondeteck = new rbQthread();
     rbQthread_persondeteck->setParm(this,&MainWindow::thread_rbQthread_persondeteck);
 
+    rbQthread_voicedeteck = new rbQthread();
+    rbQthread_voicedeteck->setParm(this,&MainWindow::thread_rbQthread_voicedeteck);
+
     rbQthread_shakehand = new rbQthread();
     rbQthread_shakehand->setParm(this,&MainWindow::thread_rbQthread_shakehand);
 
@@ -114,6 +117,7 @@ void MainWindow::signalAndSlot() {
     connect(btn_tabfunc_shakehand,&QPushButton::clicked,this,&MainWindow::slot_btn_tabfunc_shakehand);
     connect(btn_tabfunc_grepwawa,&QPushButton::clicked,this,&MainWindow::slot_btn_tabfunc_grepwawa);
     connect(btn_tabfunc_persondeteck,&QPushButton::clicked,this,&MainWindow::slot_btn_tabfunc_persondeteck);
+    connect(btn_tabfunc_voiceDetect,&QPushButton::clicked,this,&MainWindow::slot_btn_tabfunc_voiceDetect);
     //日志界面
     connect(btn_tabrecord_outRecord,&QPushButton::clicked,this,&MainWindow::slot_btn_tabrecord_outRecord);
     connect(btn_tabrecord_clearRecord,&QPushButton::clicked,this,&MainWindow::slot_btn_tabrecord_clearRecord);
@@ -243,8 +247,6 @@ void MainWindow::thread_rbQthread_beginRun() {
             RobReset_client.call(srv_clearF);
             RobReset_client.call(srv2_setE);
             system("rosservice call /set_mode_srv \"mode: 1\"");
-            //启动rviz程序
-            //启动rviz文件运行文件
             break;
     }
     cout<<"开始运行模式"<<endl;
@@ -664,6 +666,20 @@ void MainWindow::slot_timer_listenSysErrThread() {
 
 void MainWindow::slot_runTimer(QTimer *timer) {
     timer->start();
+}
+
+void MainWindow::slot_btn_tabfunc_voiceDetect() {
+    cout<<"点击了按钮"<<endl;
+    if(rbQthread_voicedeteck->isRunning()){
+        cout<<"语音程序正在运行中"<<endl;
+        emit emitQmessageBox(infoLevel::warning,QString("语音程序正在运行中"));
+    } else{
+        rbQthread_voicedeteck->run();
+    }
+}
+
+void MainWindow::thread_rbQthread_voicedeteck() {
+    system("rosrun openni2_tracker voice.sh");
 }
 
 //重启UI节点

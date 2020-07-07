@@ -146,6 +146,7 @@ public:
     QPushButton *btn_tabfunc_shakehand;
     QPushButton *btn_tabfunc_grepwawa;
     QPushButton *btn_tabfunc_persondeteck;
+    QPushButton *btn_tabfunc_voiceDetect;
     QGroupBox *groupBox_tabfunc_3;
     QVBoxLayout *verticalLayout_9;
     QGridLayout *gLayout_tabfunc_1;

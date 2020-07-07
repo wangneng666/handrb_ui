@@ -51,7 +51,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 catkin_package(
 CATKIN_DEPENDS message_runtime
 )
-
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
@@ -60,6 +59,7 @@ include_directories(
 )
 
 link_directories("3rd/log4_cplus/lib")
+
 
 #
 add_executable(main

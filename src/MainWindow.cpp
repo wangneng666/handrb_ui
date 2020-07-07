@@ -34,6 +34,10 @@ void MainWindow::SysVarInit() {
     Timer_listen_SysResetThread->setInterval(5000);
     connect(Timer_listen_SysResetThread, &QTimer::timeout, this, &MainWindow::slot_timer_listen_SysResetThread);
 
+    Timer_listen_SysErr = new QTimer(this);
+    Timer_listen_SysErr->setInterval(6000);
+    connect(Timer_listen_SysErr, &QTimer::timeout, this, &MainWindow::slot_timer_listenSysErrThread);
+
     //初始化节点观察者
     ob_node.setparm(this);
     //线程初始化
@@ -70,6 +74,7 @@ void MainWindow::SysVarInit() {
 
 void MainWindow::initRosToptic(){
     //话题
+    flag_forceSensor_publisher=Node->advertise<std_msgs::Bool>("forceSensor_moveFlag",1);
     rbGoHome_publisher=Node->advertise<std_msgs::Int8>("/back_home",1);
     visionDetech_publisher=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
     camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
@@ -137,6 +142,11 @@ void MainWindow::slot_btn_tabmain_devConnOrRviz() {
 
 //开始运行
 void MainWindow::slot_btn_tabmain_beginRun() {
+    if(index_SysRunStep!=1){
+        emit emitQmessageBox(infoLevel::warning,QString("请先进行设备连接或启动rviz!"));
+        return;
+    }
+
     if(rbQthread_beginRun->isRunning()){
         emit emitQmessageBox(infoLevel::warning,QString("请不要重复运行设备!"));
     } else{
@@ -158,8 +168,10 @@ void MainWindow::slot_btn_tabmain_sysStop() {
 void MainWindow::slot_btn_tabmain_sysReset() {
     if (rbQthread_sysReset->isRunning()) {
         emit emitQmessageBox(infoLevel::warning, QString("程序正在执行中,请不要重复启动!"));
-    } else {
-        //先掉机器人使能
+    } else
+    {
+        index_SysRunStep=0;
+        //掉机器人使能
         hsr_rosi_device::SetEnableSrv srv;
         srv.request.enable= false;
         RobEnable_client.call(srv);
@@ -200,14 +212,15 @@ void MainWindow::slot_btn_tabmain_sysReset() {
 void MainWindow::thread_rbQthread_devConnOrRviz() {
     switch (cbox_tabmain_chooseMode->currentIndex()){
         case 0:
-            emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
+            emit emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
             break;
         case 1:
             //启动真机连接launch文件
-
+            index_SysRunStep=1;
             break;
         case 2:
             //启动rviz文件
+            index_SysRunStep=1;
             system("roslaunch co605_fight_moveit_config demo.launch");
             break;
     }
@@ -216,19 +229,19 @@ void MainWindow::thread_rbQthread_devConnOrRviz() {
 void MainWindow::thread_rbQthread_beginRun() {
     switch (cbox_tabmain_chooseMode->currentIndex()){
         case 0:
-            emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
+            emit emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
             break;
         case 1:
             cout<<"进来了"<<endl;
             //启动真机运行launch文件
-//            system("roslaunch handrb_ui handRobotGrab.launch");
+            system("roslaunch handrb_ui handRobotGrab.launch");
             //如果复位过程序,增需要重新启动本节点
             if(flag_havedReset){ob_node.rebootUiNode();}
             break;
         case 2:
             //如果复位过程序,增需要重新启动本节点
             if(flag_havedReset){ob_node.rebootUiNode();}
-//            system("roslaunch handrb_ui handRobotGrab.launch");
+            system("roslaunch handrb_ui handRobotGrab.launch");
             //启动rviz文件运行文件
             break;
     }
@@ -520,6 +533,7 @@ void MainWindow::showLightColor(QLabel *label, string color) {
     }
 }
 
+//监听系统各设备状态
 void MainWindow::slot_timer_listen_status() {
     mutex_devDetector.lock();
     for (auto detector : devDetectorList)
@@ -609,7 +623,6 @@ void MainWindow::thread_rbQthread_handClaw_gesture(string gesture) {
 
 //系统复位线程启动
 void MainWindow::slot_rbQthread_listenSysResetStart() {
-    cout<<"进入 slot_rbQthread_listenSysResetStart"<<endl;
     btn_tabmain_sysReset->setEnabled(false);
     Timer_listen_SysResetThread->start();
 }
@@ -619,9 +632,16 @@ void MainWindow::slot_rbQthread_listenFinish() {
 }
 
 void MainWindow::slot_timer_listen_SysResetThread() {
-    cout<<"进入slot_timer_listen_SysResetThread"<<endl;
     btn_tabmain_sysReset->setEnabled(true);
     Timer_listen_SysResetThread->stop();
+}
+
+void MainWindow::slot_timer_listenSysErrThread() {
+
+}
+
+void MainWindow::slot_runTimer(QTimer *timer) {
+    timer->start();
 }
 
 //重启UI节点

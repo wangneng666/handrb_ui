@@ -67,6 +67,7 @@ public:
 private:
     //全局变量
     int index_sysMode=0;
+    int index_SysRunStep=0;
     QMutex mutex_devDetector;
     bool flag_switchPersonDecBtnText= false;
     bool flag_havedReset= false;
@@ -84,6 +85,7 @@ private:
     //定时器
     QTimer* Timer_listen_status;
     QTimer* Timer_listen_SysResetThread;
+    QTimer* Timer_listen_SysErr;
     //ros消息对象
     ros::ServiceClient RobReset_client;
     ros::ServiceClient RobEnable_client;
@@ -99,6 +101,7 @@ private:
     ros::Subscriber forceSensor_subscriber;
     ros::Publisher visionDetech_publisher;
     ros::Publisher rbGoHome_publisher;
+    ros::Publisher flag_forceSensor_publisher;
     //线程句柄
     vector<rbQthread*> rbQthreadList;
     rbQthread* rbQthread_devConnOrRviz;
@@ -152,6 +155,7 @@ private:
     //定时器槽函数
     void slot_timer_listen_status();
     void slot_timer_listen_SysResetThread();
+    void slot_timer_listenSysErrThread();
     //线程函数
     void thread_rbQthread_devConnOrRviz();
     void thread_rbQthread_beginRun();
@@ -169,6 +173,8 @@ signals:
     void emitTextControl(QString text) const;
     void emitQmessageBox(infoLevel level,QString info);
     void emitLightColor(QLabel* label,string color);
+    void emitStartTimer(QTimer* timer);
+
 
 private slots:
     void displayTextControl(QString text);
@@ -177,6 +183,8 @@ private slots:
     void slot_combox_chooseMode_Clicked(int index);
     void slot_rbQthread_listenSysResetStart();//监听系统复位线程启动
     void slot_rbQthread_listenFinish();//监听线程资源释放
+    void slot_runTimer(QTimer* timer);
+
 
 };
 

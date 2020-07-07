@@ -6,4 +6,8 @@
  -->
 <include file="$(find pick_place_bridge)/launch/bringup.launch" />
 <include file="$(find reception_robot)/launch/fake_bringup.launch" />
+
+<!--
+<include file="$(find hsc3api_bridge)/launch/hsc3api_bridge.launch" />
+ -->
 </launch>

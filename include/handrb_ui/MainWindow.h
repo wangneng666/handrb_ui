@@ -137,11 +137,21 @@ private:
     void slot_btn_gripper_OK_Pose();//五指夹爪OK手势
     void slot_btn_gripper_Y_Pose();//五指夹爪Y手势
     void slot_btn_rbGoHomePose();//机器人回原点
-    //功能界面槽函数
-    void slot_btn_tabfunc_shakehand();//机器人握手
-    void slot_btn_tabfunc_grepwawa();//机器人抓娃娃
-    void slot_btn_tabfunc_persondeteck();//行人检测
-    void slot_btn_tabfunc_voiceDetect();//语音检测
+    //握手界面槽函数
+    void slot_btn_tabShakeHand_startRobRun();
+    void slot_btn_tabShakeHand_startRobCtl();
+    void slot_btn_tabShakeHand_startimpedence();
+    void slot_btn_tabShakeHand_startvoice();
+    void slot_btn_tabShakeHand_begin();
+    void slot_btn_tabShakeHand_stop();
+    void slot_btn_tabShakeHand_close();
+    //抓娃娃界面槽函数
+    void slot_btn_tabgrabToy_startRobRun();
+    void slot_btn_tabgrabToy_startRobCtl();
+    void slot_btn_tabgrabToy_startvoice();
+    void slot_btn_tabgrabToy_run();
+    void slot_btn_tabgrabToy_stop();
+    void slot_btn_tabgrabToy_close();
     //日志界面槽函数
     void slot_btn_tabrecord_outRecord();//导出日志
     void slot_btn_tabrecord_clearRecord();//清除日志

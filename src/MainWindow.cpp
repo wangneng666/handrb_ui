@@ -86,9 +86,9 @@ void MainWindow::initRosToptic(){
     camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
 //    camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
     forceSensor_subscriber=Node->subscribe<geometry_msgs::Wrench>("daq_data", 1000, &MainWindow::callback_forceSensor_subscriber, this);
-    voiceSolveRes_subcriber=Node->subscribe<std_msgs::String>("voiceSolve_res",1,&MainWindow::callback_voiceSolveRes_subcriber, this);
-    personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
-    grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
+//    voiceSolveRes_subcriber=Node->subscribe<std_msgs::String>("voiceSolve_res",1,&MainWindow::callback_voiceSolveRes_subcriber, this);
+//    personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
+//    grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
     robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
 
     //服务
@@ -116,11 +116,22 @@ void MainWindow::signalAndSlot() {
     connect(btn_gripper_OK_Pose,&QPushButton::clicked,this,&MainWindow::slot_btn_gripper_OK_Pose);
     connect(btn_gripper_Y_Pose,&QPushButton::clicked,this,&MainWindow::slot_btn_gripper_Y_Pose);
     connect(btn_rbGoHomePose,&QPushButton::clicked,this,&MainWindow::slot_btn_rbGoHomePose);
-    //功能界面
-    connect(btn_tabfunc_shakehand,&QPushButton::clicked,this,&MainWindow::slot_btn_tabfunc_shakehand);
-    connect(btn_tabfunc_grepwawa,&QPushButton::clicked,this,&MainWindow::slot_btn_tabfunc_grepwawa);
-    connect(btn_tabfunc_persondeteck,&QPushButton::clicked,this,&MainWindow::slot_btn_tabfunc_persondeteck);
-    connect(btn_tabfunc_voiceDetect,&QPushButton::clicked,this,&MainWindow::slot_btn_tabfunc_voiceDetect);
+    //握手界面
+    connect(btn_tabShakeHand_startRobRun,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_startRobRun);
+    connect(btn_tabShakeHand_startRobCtl,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_startRobCtl);
+    connect(btn_tabShakeHand_startimpedence,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_startimpedence);
+    connect(btn_tabShakeHand_startvoice,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_startvoice);
+    connect(btn_tabShakeHand_begin,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_begin);
+    connect(btn_tabShakeHand_stop,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_stop);
+    connect(btn_tabShakeHand_close,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_close);
+    //抓娃娃界面
+    connect(btn_tabgrabToy_startRobRun,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_startRobRun);
+    connect(btn_tabgrabToy_startRobCtl,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_startRobCtl);
+    connect(btn_tabgrabToy_startvoice,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_startvoice);
+    connect(btn_tab_grabToy_run,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_run);
+    connect(btn_tab_grabToy_stop,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_stop);
+    connect(btn_tab_grabToy_close,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_close);
+
     //日志界面
     connect(btn_tabrecord_outRecord,&QPushButton::clicked,this,&MainWindow::slot_btn_tabrecord_outRecord);
     connect(btn_tabrecord_clearRecord,&QPushButton::clicked,this,&MainWindow::slot_btn_tabrecord_clearRecord);
@@ -359,22 +370,22 @@ void MainWindow::slot_btn_rbGoHomePose() {
     rbGoHome_publisher.publish(msg);
 }
 
-void MainWindow::slot_btn_tabfunc_shakehand() {
-    cout<<"点击握手按钮"<<endl;
-    if(rbQthread_shakehand->isRunning()){
-        emit emitQmessageBox(infoLevel::warning ,"与人握手程序运行中,请不要重复启动!");
-    } else{
-        rbQthread_shakehand->start();
-    }
-}
-
-void MainWindow::slot_btn_tabfunc_grepwawa() {
-    if(rbQthread_grepwawa->isRunning()){
-        emit emitQmessageBox(infoLevel::warning ,"抓娃娃程序运行中,请不要重复启动!");
-    } else{
-        rbQthread_grepwawa->start();
-    }
-}
+//void MainWindow::slot_btn_tabfunc_shakehand() {
+//    cout<<"点击握手按钮"<<endl;
+//    if(rbQthread_shakehand->isRunning()){
+//        emit emitQmessageBox(infoLevel::warning ,"与人握手程序运行中,请不要重复启动!");
+//    } else{
+//        rbQthread_shakehand->start();
+//    }
+//}
+//
+//void MainWindow::slot_btn_tabfunc_grepwawa() {
+//    if(rbQthread_grepwawa->isRunning()){
+//        emit emitQmessageBox(infoLevel::warning ,"抓娃娃程序运行中,请不要重复启动!");
+//    } else{
+//        rbQthread_grepwawa->start();
+//    }
+//}
 
 void MainWindow::slot_btn_tabrecord_outRecord() {
     QString file_path = QFileDialog::getOpenFileName(this,"选择文件",logPath, "Files(*.log)");
@@ -428,33 +439,33 @@ void MainWindow::slot_combox_chooseMode_Clicked(int index) {
 
 
 
-void MainWindow::callback_voiceSolveRes_subcriber(std_msgs::String msg) {
-    label_tabfunc_voiceValue->setText(QString("当前语音识别结果:")+QString::fromStdString(msg.data));
-}
-
-void MainWindow::callback_personDetectRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
-    //如果标志为关闭行人检测
-    if(!flag_switchPersonDecBtnText){
-        return;
-    }
-    const cv_bridge::CvImageConstPtr &ptr = cv_bridge::toCvShare(msg, "bgr8");
-    cv::Mat mat = ptr->image;
-    QImage qimage = cvMat2QImage(mat);
-    QPixmap tmp_pixmap = QPixmap::fromImage(qimage);
-    QPixmap new_pixmap = tmp_pixmap.scaled(label_tabfunc_image->width(), label_tabfunc_image->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
-//    QPixmap tmp_pixmap = pixmap1.scaled(label_picture1->width(), label_picture1->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 按比例缩放
-    label_tabfunc_image->setPixmap(new_pixmap);
-}
-
-void MainWindow::callback_grabDollImagRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
-    const cv_bridge::CvImageConstPtr &ptr = cv_bridge::toCvShare(msg, "bgr8");
-    cv::Mat mat = ptr->image;
-    QImage qimage = cvMat2QImage(mat);
-    QPixmap tmp_pixmap = QPixmap::fromImage(qimage);
-    QPixmap new_pixmap = tmp_pixmap.scaled(label_tabfunc_image->width(), label_tabfunc_image->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
-//    QPixmap tmp_pixmap = pixmap1.scaled(label_picture1->width(), label_picture1->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 按比例缩放
-    label_tabfunc_image->setPixmap(new_pixmap);
-}
+//void MainWindow::callback_voiceSolveRes_subcriber(std_msgs::String msg) {
+//    label_tabfunc_voiceValue->setText(QString("当前语音识别结果:")+QString::fromStdString(msg.data));
+//}
+//
+//void MainWindow::callback_personDetectRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
+//    //如果标志为关闭行人检测
+//    if(!flag_switchPersonDecBtnText){
+//        return;
+//    }
+//    const cv_bridge::CvImageConstPtr &ptr = cv_bridge::toCvShare(msg, "bgr8");
+//    cv::Mat mat = ptr->image;
+//    QImage qimage = cvMat2QImage(mat);
+//    QPixmap tmp_pixmap = QPixmap::fromImage(qimage);
+//    QPixmap new_pixmap = tmp_pixmap.scaled(label_tabfunc_image->width(), label_tabfunc_image->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
+////    QPixmap tmp_pixmap = pixmap1.scaled(label_picture1->width(), label_picture1->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 按比例缩放
+//    label_tabfunc_image->setPixmap(new_pixmap);
+//}
+//
+//void MainWindow::callback_grabDollImagRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
+//    const cv_bridge::CvImageConstPtr &ptr = cv_bridge::toCvShare(msg, "bgr8");
+//    cv::Mat mat = ptr->image;
+//    QImage qimage = cvMat2QImage(mat);
+//    QPixmap tmp_pixmap = QPixmap::fromImage(qimage);
+//    QPixmap new_pixmap = tmp_pixmap.scaled(label_tabfunc_image->width(), label_tabfunc_image->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
+////    QPixmap tmp_pixmap = pixmap1.scaled(label_picture1->width(), label_picture1->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 按比例缩放
+//    label_tabfunc_image->setPixmap(new_pixmap);
+//}
 
 void MainWindow::callback_robStatus_subscriber(const industrial_msgs::RobotStatus::ConstPtr robot_status) {
     mutex_devDetector.lock();
@@ -587,28 +598,28 @@ void MainWindow::slot_timer_listen_status() {
     mutex_devDetector.unlock();
 }
 
-void MainWindow::slot_btn_tabfunc_persondeteck() {
-    mutex_devDetector.lock();
-    cameraConn_Detector.lifeNum=100;
-    cameraConn_Detector.status= true;
-    mutex_devDetector.unlock();
-    if(!flag_switchPersonDecBtnText){
-        if(rbQthread_persondeteck->isRunning()){
-            emit emitQmessageBox(infoLevel::information,QString("行人检测运行中"));
-        } else{
-            rbQthread_persondeteck->start();
-        }
-        btn_tabfunc_persondeteck->setText("关闭行人检测");
-    } else{
-        //关闭行人检测
-        std_msgs::Bool msg;
-        msg.data= false;
-        visionDetech_publisher.publish(msg);
-        btn_tabfunc_persondeteck->setText("打开行人检测");
-    }
-    flag_switchPersonDecBtnText=!flag_switchPersonDecBtnText;
-
-}
+//void MainWindow::slot_btn_tabfunc_persondeteck() {
+//    mutex_devDetector.lock();
+//    cameraConn_Detector.lifeNum=100;
+//    cameraConn_Detector.status= true;
+//    mutex_devDetector.unlock();
+//    if(!flag_switchPersonDecBtnText){
+//        if(rbQthread_persondeteck->isRunning()){
+//            emit emitQmessageBox(infoLevel::information,QString("行人检测运行中"));
+//        } else{
+//            rbQthread_persondeteck->start();
+//        }
+//        btn_tabfunc_persondeteck->setText("关闭行人检测");
+//    } else{
+//        //关闭行人检测
+//        std_msgs::Bool msg;
+//        msg.data= false;
+//        visionDetech_publisher.publish(msg);
+//        btn_tabfunc_persondeteck->setText("打开行人检测");
+//    }
+//    flag_switchPersonDecBtnText=!flag_switchPersonDecBtnText;
+//
+//}
 
 void MainWindow::thread_rbQthread_persondeteck() {
     system("rosrun openni2_tracker peopledetection.sh");
@@ -673,17 +684,69 @@ void MainWindow::slot_runTimer(QTimer *timer) {
     timer->start();
 }
 
-void MainWindow::slot_btn_tabfunc_voiceDetect() {
-    cout<<"点击了按钮 "<<endl;
-    if(rbQthread_voicedeteck->isRunning()){
-        emit emitQmessageBox(infoLevel::warning,QString("语音程序正在运行中"));
-    } else{
-        rbQthread_voicedeteck->start();
-    }
-}
+//void MainWindow::slot_btn_tabfunc_voiceDetect() {
+//    cout<<"点击了按钮 "<<endl;
+//    if(rbQthread_voicedeteck->isRunning()){
+//        emit emitQmessageBox(infoLevel::warning,QString("语音程序正在运行中"));
+//    } else{
+//        rbQthread_voicedeteck->start();
+//    }
+//}
 
 void MainWindow::thread_rbQthread_voicedeteck() {
     system("rosrun openni2_tracker voice.sh");
+}
+
+void MainWindow::slot_btn_tabShakeHand_startRobRun() {
+
+}
+
+void MainWindow::slot_btn_tabShakeHand_startRobCtl() {
+
+}
+
+void MainWindow::slot_btn_tabShakeHand_startimpedence() {
+
+}
+
+void MainWindow::slot_btn_tabShakeHand_startvoice() {
+
+}
+
+void MainWindow::slot_btn_tabShakeHand_begin() {
+
+}
+
+void MainWindow::slot_btn_tabShakeHand_stop() {
+
+}
+
+void MainWindow::slot_btn_tabShakeHand_close() {
+
+}
+
+void MainWindow::slot_btn_tabgrabToy_startRobRun() {
+
+}
+
+void MainWindow::slot_btn_tabgrabToy_startRobCtl() {
+
+}
+
+void MainWindow::slot_btn_tabgrabToy_startvoice() {
+
+}
+
+void MainWindow::slot_btn_tabgrabToy_run() {
+
+}
+
+void MainWindow::slot_btn_tabgrabToy_stop() {
+
+}
+
+void MainWindow::slot_btn_tabgrabToy_close() {
+
 }
 
 //重启UI节点

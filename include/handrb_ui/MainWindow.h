@@ -170,7 +170,6 @@ private:
     //其他工具函数
     QImage cvMat2QImage(const cv::Mat& mat);
 
-
 signals:
     void emitTextControl(QString text) const;
     void emitQmessageBox(infoLevel level,QString info);

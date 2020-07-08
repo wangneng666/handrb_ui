@@ -71,6 +71,7 @@ void MainWindow::SysVarInit() {
     rbQthreadList.push_back(rbQthread_beginRun);
     rbQthreadList.push_back(rbQthread_sysStop);
     rbQthreadList.push_back(rbQthread_persondeteck);
+    rbQthreadList.push_back(rbQthread_voicedeteck);
     rbQthreadList.push_back(rbQthread_shakehand);
     rbQthreadList.push_back(rbQthread_grepwawa);
 }
@@ -455,14 +456,14 @@ void MainWindow::callback_robStatus_subscriber(const industrial_msgs::RobotStatu
     mutex_devDetector.lock();
     RobConn_Detector.lifeNum=100;
     RobConn_Detector.status= true;
-    RobErr_Detector.lifeNum=100;
-    RobEnable_Detector.lifeNum=100;
     if(robot_status->in_error.val==0){
+        RobErr_Detector.lifeNum=100;
         RobErr_Detector.status= true;
     } else{
         RobErr_Detector.status= false;
     }
     if(robot_status->drives_powered.val==1){
+        RobEnable_Detector.lifeNum=100;
         RobEnable_Detector.status= true;
     } else{
         RobEnable_Detector.status= false;
@@ -674,7 +675,7 @@ void MainWindow::slot_btn_tabfunc_voiceDetect() {
         cout<<"语音程序正在运行中"<<endl;
         emit emitQmessageBox(infoLevel::warning,QString("语音程序正在运行中"));
     } else{
-        rbQthread_voicedeteck->run();
+        rbQthread_voicedeteck->start();
     }
 }
 

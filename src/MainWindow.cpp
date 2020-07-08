@@ -38,7 +38,7 @@ void MainWindow::SysVarInit() {
     Timer_listen_SysErr->setInterval(6000);
     connect(Timer_listen_SysErr, &QTimer::timeout, this, &MainWindow::slot_timer_listenSysErrThread);
 
-    //初始化节点观察者
+    //初始化节点观察者ROS_INFO_STREAM("----back home ...----");
     ob_node.setparm(this);
     //线程初始化
     rbQthread_devConnOrRviz = new rbQthread();
@@ -127,7 +127,7 @@ void MainWindow::signalAndSlot() {
 /*********************************自定义信号与槽函数绑定*************************************************/
     connect(this, &MainWindow::emitTextControl,this, &MainWindow::displayTextControl);
     connect(this, &MainWindow::emitLightColor,this, &MainWindow::showLightColor);
-    connect(this, SIGNAL(emitQmessageBox(infoLevel ,QString)), this,SLOT(showQmessageBox(infoLevel,QString)));  //将自定义槽连接到自定义信号
+    connect(this, SIGNAL(emitQmessageBox(infoLevel ,QString)), this,SLOT(showQmessageBox(infoLevel,QString)),Qt::QueuedConnection);  //将自定义槽连接到自定义信号
 
 //    connect(rbQthread_devConnOrRviz, SIGNAL(signal_SendMsgBox(infoLevel ,QString)), this,SLOT(thread_slot_devConnOrRviz()));
 
@@ -234,22 +234,22 @@ void MainWindow::thread_rbQthread_devConnOrRviz() {
 }
 //开始运行子线程
 void MainWindow::thread_rbQthread_beginRun() {
-    switch (cbox_tabmain_robmode->currentIndex()){
-        case 0:
-            emit emitQmessageBox(infoLevel::information,QString("请选择机器人模式!"));
-            return;
-        case 1:
-            system("rosservice call /set_mode_srv \"mode: 0\"");
-            break;
-        case 2:
-            //上使能
-            hsr_rosi_device::ClearFaultSrv srv_clearF;
-            hsr_rosi_device::SetEnableSrv srv2_setE;
-            RobReset_client.call(srv_clearF);
-            RobReset_client.call(srv2_setE);
-            system("rosservice call /set_mode_srv \"mode: 1\"");
-            break;
-    }
+    // switch (cbox_tabmain_robmode->currentIndex()){
+    //     case 0:
+    //         emit emitQmessageBox(infoLevel::information,QString("请选择机器人模式!"));
+    //         return;
+    //     case 1:
+    //         system("rosservice call /set_mode_srv \"mode: 0\"");
+    //         break;
+    //     case 2:
+    //         //上使能
+    //         hsr_rosi_device::ClearFaultSrv srv_clearF;
+    //         hsr_rosi_device::SetEnableSrv srv2_setE;
+    //         RobReset_client.call(srv_clearF);
+    //         RobReset_client.call(srv2_setE);
+    //         system("rosservice call /set_mode_srv \"mode: 1\"");
+    //         break;
+    // }
     cout<<"开始运行模式"<<endl;
     switch (cbox_tabmain_chooseMode->currentIndex()){
         case 0:
@@ -272,13 +272,14 @@ void MainWindow::thread_rbQthread_beginRun() {
 }
 //系统停止子线程
 void MainWindow::thread_rbQthread_sysStop() {
-
-    hsr_rosi_device::SetEnableSrv srv;
-    srv.request.enable= false;
-    if(RobEnable_client.call(srv)){
-    } else{
-        emit emitQmessageBox(infoLevel ::warning,"机器人掉使能服务连接失败");
-    }
+    system("rosservice call /stop_motion");
+    system("rostopic pub -1 /stop_move std_msgs/Bool \"data: true\"");
+    // hsr_rosi_device::SetEnableSrv srv;
+    // srv.request.enable= false;
+    // if(RobEnable_client.call(srv)){
+    // } else{
+    //     emit emitQmessageBox(infoLevel ::warning,"机器人掉使能服务连接失败");
+    // }
 }
 //系统复位子线程
 void MainWindow::thread_rbQthread_sysReset() {
@@ -357,6 +358,7 @@ void MainWindow::slot_btn_rbGoHomePose() {
 }
 
 void MainWindow::slot_btn_tabfunc_shakehand() {
+    cout<<"点击握手按钮"<<endl;
     if(rbQthread_shakehand->isRunning()){
         emit emitQmessageBox(infoLevel::warning ,"与人握手程序运行中,请不要重复启动!");
     } else{
@@ -611,18 +613,18 @@ void MainWindow::thread_rbQthread_persondeteck() {
 }
 
 void MainWindow::thread_rbQthread_shakehand() {
-    emit emitQmessageBox(infoLevel::information,"与人握手信号发出");
+    // emit emitQmessageBox(infoLevel::information,"与人握手信号发出");
     rb_msgAndSrv::rb_DoubleBool srv;
     srv.request.request= true;
 
     if(handClaw_shakeHand_client.call(srv)){
         if(srv.response.respond){
-            emit emitQmessageBox(infoLevel::information ,"机器人握手姿势准备好!");
+            // emit emitQmessageBox(infoLevel::information ,"机器人握手姿势准备好!");
         } else{
-            emit emitQmessageBox(infoLevel::warning ,"机器人握手姿势运动出错!");
+            // emit emitQmessageBox(infoLevel::warning ,"机器人握手姿势运动出错!");
         }
     } else{
-        emit emitQmessageBox(infoLevel::warning ,"与人握手服务端连接失败!");
+        // emit emitQmessageBox(infoLevel::warning ,"与人握手服务端连接失败!");
     }
 }
 

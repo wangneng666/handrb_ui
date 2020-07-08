@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <launch>
-    <node pkg="hsr_impedance" type="hsr_impedance" name="hsr_impedance" output="screen" />
+    <!-- <node pkg="hsr_impedance" type="hsr_impedance" name="hsr_impedance" output="screen" /> -->
     <include file="$(find pick_place_bridge)/launch/bringup.launch" />
     <include file="$(find reception_robot)/launch/fake_bringup.launch" />
 

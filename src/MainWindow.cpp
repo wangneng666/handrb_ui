@@ -38,6 +38,8 @@ void MainWindow::SysVarInit() {
     Timer_listen_SysErr->setInterval(6000);
     connect(Timer_listen_SysErr, &QTimer::timeout, this, &MainWindow::slot_timer_listenSysErrThread);
 
+    qRegisterMetaType<infoLevel>("infoLevel");//信号与槽连接自定义类型需要注册
+
     //初始化节点观察者ROS_INFO_STREAM("----back home ...----");
     ob_node.setparm(this);
     //线程初始化
@@ -619,12 +621,12 @@ void MainWindow::thread_rbQthread_shakehand() {
 
     if(handClaw_shakeHand_client.call(srv)){
         if(srv.response.respond){
-            // emit emitQmessageBox(infoLevel::information ,"机器人握手姿势准备好!");
+             emit emitQmessageBox(infoLevel::information ,"机器人握手姿势准备好!");
         } else{
-            // emit emitQmessageBox(infoLevel::warning ,"机器人握手姿势运动出错!");
+             emit emitQmessageBox(infoLevel::warning ,"机器人握手姿势运动出错!");
         }
     } else{
-        // emit emitQmessageBox(infoLevel::warning ,"与人握手服务端连接失败!");
+         emit emitQmessageBox(infoLevel::warning ,"与人握手服务端连接失败!");
     }
 }
 
@@ -674,7 +676,6 @@ void MainWindow::slot_runTimer(QTimer *timer) {
 void MainWindow::slot_btn_tabfunc_voiceDetect() {
     cout<<"点击了按钮"<<endl;
     if(rbQthread_voicedeteck->isRunning()){
-        cout<<"语音程序正在运行中"<<endl;
         emit emitQmessageBox(infoLevel::warning,QString("语音程序正在运行中"));
     } else{
         rbQthread_voicedeteck->start();

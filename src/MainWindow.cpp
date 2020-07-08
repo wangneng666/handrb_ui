@@ -674,7 +674,7 @@ void MainWindow::slot_runTimer(QTimer *timer) {
 }
 
 void MainWindow::slot_btn_tabfunc_voiceDetect() {
-    cout<<"点击了按钮"<<endl;
+    cout<<"点击了按钮 "<<endl;
     if(rbQthread_voicedeteck->isRunning()){
         emit emitQmessageBox(infoLevel::warning,QString("语音程序正在运行中"));
     } else{

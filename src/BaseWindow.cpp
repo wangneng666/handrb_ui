@@ -482,24 +482,28 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     btn_tabShakeHand_startRobRun = new QPushButton(gBox_tabShakeHand_status);
     btn_tabShakeHand_startRobRun->setObjectName(QString::fromUtf8("btn_tabShakeHand_startRobRun"));
     btn_tabShakeHand_startRobRun->setMaximumSize(QSize(150, 50));
+    btn_tabShakeHand_startRobRun->setFixedSize(BTN_W,BTN_H);
 
     gLayout_tabShakeHand->addWidget(btn_tabShakeHand_startRobRun, 0, 2, 1, 1);
 
     btn_tabShakeHand_startRobCtl = new QPushButton(gBox_tabShakeHand_status);
     btn_tabShakeHand_startRobCtl->setObjectName(QString::fromUtf8("btn_tabShakeHand_startRobCtl"));
     btn_tabShakeHand_startRobCtl->setMaximumSize(QSize(150, 50));
+    btn_tabShakeHand_startRobCtl->setFixedSize(BTN_W,BTN_H);
 
     gLayout_tabShakeHand->addWidget(btn_tabShakeHand_startRobCtl, 1, 2, 1, 1);
 
     btn_tabShakeHand_startimpedence = new QPushButton(gBox_tabShakeHand_status);
     btn_tabShakeHand_startimpedence->setObjectName(QString::fromUtf8("btn_tabShakeHand_startimpedence"));
     btn_tabShakeHand_startimpedence->setMaximumSize(QSize(150, 50));
+    btn_tabShakeHand_startimpedence->setFixedSize(BTN_W,BTN_H);
 
     gLayout_tabShakeHand->addWidget(btn_tabShakeHand_startimpedence, 2, 2, 1, 1);
 
     btn_tabShakeHand_startvoice = new QPushButton(gBox_tabShakeHand_status);
     btn_tabShakeHand_startvoice->setObjectName(QString::fromUtf8("btn_tabShakeHand_startvoice"));
     btn_tabShakeHand_startvoice->setMaximumSize(QSize(150, 50));
+    btn_tabShakeHand_startvoice->setFixedSize(BTN_W,BTN_H);
 
     gLayout_tabShakeHand->addWidget(btn_tabShakeHand_startvoice, 3, 2, 1, 1);
 
@@ -549,6 +553,7 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     btn_tabShakeHand_close = new QPushButton(gBox_tabShakeHand_func);
     btn_tabShakeHand_close->setObjectName(QString::fromUtf8("btn_tabShakeHand_close"));
     btn_tabShakeHand_close->setMaximumSize(QSize(150, 50));
+    btn_tabShakeHand_close->setFixedSize(BTN_W,BTN_H);
 
     horizontalLayout_4->addWidget(btn_tabShakeHand_close);
 
@@ -648,18 +653,21 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     btn_tabgrabToy_startRobRun = new QPushButton(gBox_tab_grabToy_1);
     btn_tabgrabToy_startRobRun->setObjectName(QString::fromUtf8("btn_tabgrabToy_startRobRun"));
     btn_tabgrabToy_startRobRun->setMaximumSize(QSize(150, 50));
+    btn_tabgrabToy_startRobRun->setFixedSize(BTN_W,BTN_H);
 
     gLayout_tab_grabToy->addWidget(btn_tabgrabToy_startRobRun, 0, 2, 1, 1);
 
     btn_tabgrabToy_startRobCtl = new QPushButton(gBox_tab_grabToy_1);
     btn_tabgrabToy_startRobCtl->setObjectName(QString::fromUtf8("btn_tabgrabToy_startRobCtl"));
     btn_tabgrabToy_startRobCtl->setMaximumSize(QSize(150, 50));
+    btn_tabgrabToy_startRobCtl->setFixedSize(BTN_W,BTN_H);
 
     gLayout_tab_grabToy->addWidget(btn_tabgrabToy_startRobCtl, 1, 2, 1, 1);
 
     btn_tabgrabToy_startvoice = new QPushButton(gBox_tab_grabToy_1);
     btn_tabgrabToy_startvoice->setObjectName(QString::fromUtf8("btn_tabgrabToy_startvoice"));
     btn_tabgrabToy_startvoice->setMaximumSize(QSize(150, 50));
+    btn_tabgrabToy_startvoice->setFixedSize(BTN_W,BTN_H);
 
     gLayout_tab_grabToy->addWidget(btn_tabgrabToy_startvoice, 2, 2, 1, 1);
 
@@ -700,18 +708,20 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     btn_tab_grabToy_run = new QPushButton(gBox_tab_grabToy_3);
     btn_tab_grabToy_run->setObjectName(QString::fromUtf8("btn_tab_grabToy_run"));
     btn_tab_grabToy_run->setMaximumSize(QSize(150, 50));
-
+    btn_tab_grabToy_run->setFixedSize(BTN_W,BTN_H);
     hLayout_tab_grabToy_3->addWidget(btn_tab_grabToy_run);
 
     btn_tab_grabToy_stop = new QPushButton(gBox_tab_grabToy_3);
     btn_tab_grabToy_stop->setObjectName(QString::fromUtf8("btn_tab_grabToy_stop"));
     btn_tab_grabToy_stop->setMaximumSize(QSize(150, 50));
+    btn_tab_grabToy_stop->setFixedSize(BTN_W,BTN_H);
 
     hLayout_tab_grabToy_3->addWidget(btn_tab_grabToy_stop);
 
     btn_tab_grabToy_close = new QPushButton(gBox_tab_grabToy_3);
     btn_tab_grabToy_close->setObjectName(QString::fromUtf8("btn_tab_grabToy_close"));
     btn_tab_grabToy_close->setMaximumSize(QSize(150, 50));
+    btn_tab_grabToy_close->setFixedSize(BTN_W,BTN_H);
 
     hLayout_tab_grabToy_3->addWidget(btn_tab_grabToy_close);
 

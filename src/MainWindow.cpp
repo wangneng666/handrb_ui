@@ -49,8 +49,6 @@ void MainWindow::SysVarInit() {
     rbQthread_beginRun = new rbQthread();
     rbQthread_beginRun->setParm(this,&MainWindow::thread_rbQthread_beginRun);
 
-    rbQthread_sysStop = new rbQthread();
-    rbQthread_sysStop->setParm(this,&MainWindow::thread_rbQthread_sysStop);
 
     rbQthread_sysReset = new rbQthread();
     rbQthread_sysReset->setParm(this,&MainWindow::thread_rbQthread_sysReset);
@@ -61,13 +59,26 @@ void MainWindow::SysVarInit() {
     rbQthread_voicedeteck = new rbQthread();
     rbQthread_voicedeteck->setParm(this,&MainWindow::thread_rbQthread_voicedeteck);
 
+
+    rbQthread_handClaw_gesture = new rbQthread();
+    /********************************************************************************************/
+    rbQthread_rbRunMoudlePrepare = new rbQthread();
+    rbQthread_rbCtlMoudlePrepare = new rbQthread();
+    rbQthread_rbImpMoudlePrepare = new rbQthread();
+    rbQthread_rbVoiceMoudlePrepare = new rbQthread();
+    rbQthread_rbRunMoudlePrepare->setParm(this,&MainWindow::thread_rbQthread_rbRunMoudlePrepare);
+    rbQthread_rbCtlMoudlePrepare->setParm(this,&MainWindow::thread_rbQthread_rbCtlMoudlePrepare);
+    rbQthread_rbImpMoudlePrepare->setParm(this,&MainWindow::thread_rbQthread_rbImpMoudlePrepare);
+    rbQthread_rbVoiceMoudlePrepare->setParm(this,&MainWindow::thread_rbQthread_rbVoiceMoudlePrepare);
+
     rbQthread_shakehand = new rbQthread();
     rbQthread_shakehand->setParm(this,&MainWindow::thread_rbQthread_shakehand);
 
+    rbQthread_sysStop = new rbQthread();
+    rbQthread_sysStop->setParm(this,&MainWindow::thread_rbQthread_sysStop);
+
     rbQthread_grepwawa = new rbQthread();
     rbQthread_grepwawa->setParm(this,&MainWindow::thread_rbQthread_grepwawa);
-
-    rbQthread_handClaw_gesture = new rbQthread();
 
     rbQthreadList.push_back(rbQthread_devConnOrRviz);
     rbQthreadList.push_back(rbQthread_beginRun);
@@ -698,26 +709,52 @@ void MainWindow::thread_rbQthread_voicedeteck() {
 }
 
 void MainWindow::slot_btn_tabShakeHand_startRobRun() {
-
+    if (rbQthread_rbRunMoudlePrepare->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "机器人系统程序正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_rbRunMoudlePrepare->start();
+    }
 }
 
 void MainWindow::slot_btn_tabShakeHand_startRobCtl() {
-
+    if (rbQthread_rbCtlMoudlePrepare->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "机器人控制模块程序正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_rbCtlMoudlePrepare->start();
+    }
 }
 
 void MainWindow::slot_btn_tabShakeHand_startimpedence() {
-
+    if (rbQthread_rbImpMoudlePrepare->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "阻抗模块程序正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_rbImpMoudlePrepare->start();
+    }
 }
 
 void MainWindow::slot_btn_tabShakeHand_startvoice() {
-
+    if (rbQthread_rbVoiceMoudlePrepare->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "语音模块程序正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_rbVoiceMoudlePrepare->start();
+    }
 }
 
 void MainWindow::slot_btn_tabShakeHand_begin() {
+    if (rbQthread_shakehand->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "握手正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_shakehand->start();
+    }
 
 }
 
 void MainWindow::slot_btn_tabShakeHand_stop() {
+    if (rbQthread_sysStop->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "停止正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_sysStop->start();
+    }
 
 }
 
@@ -725,28 +762,67 @@ void MainWindow::slot_btn_tabShakeHand_close() {
 
 }
 
-void MainWindow::slot_btn_tabgrabToy_startRobRun() {
 
+
+void MainWindow::slot_btn_tabgrabToy_startRobRun() {
+    if (rbQthread_rbRunMoudlePrepare->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "机器人系统程序正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_rbRunMoudlePrepare->start();
+    }
 }
 
 void MainWindow::slot_btn_tabgrabToy_startRobCtl() {
-
+    if (rbQthread_rbCtlMoudlePrepare->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "机器人控制模块程序正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_rbCtlMoudlePrepare->start();
+    }
 }
 
 void MainWindow::slot_btn_tabgrabToy_startvoice() {
-
+    if (rbQthread_rbImpMoudlePrepare->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "阻抗模块程序正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_rbImpMoudlePrepare->start();
+    }
 }
 
 void MainWindow::slot_btn_tabgrabToy_run() {
+    if (rbQthread_grepwawa->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "停止正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_grepwawa->start();
+    }
 
 }
 
 void MainWindow::slot_btn_tabgrabToy_stop() {
-
+    if (rbQthread_sysStop->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "停止正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_sysStop->start();
+    }
 }
 
 void MainWindow::slot_btn_tabgrabToy_close() {
 
+}
+
+void MainWindow::thread_rbQthread_rbRunMoudlePrepare() {
+    system("rosrun handrb_ui rbRunMoudle.sh");
+}
+
+void MainWindow::thread_rbQthread_rbCtlMoudlePrepare() {
+    system("rosrun handrb_ui rbCtlMoudle.sh");
+}
+
+void MainWindow::thread_rbQthread_rbImpMoudlePrepare() {
+    system("rosrun handrb_ui rbImpMoudle.sh");
+}
+
+void MainWindow::thread_rbQthread_rbVoiceMoudlePrepare() {
+    system("rosrun handrb_ui rbVoiceMoudle.sh");
 }
 
 //重启UI节点

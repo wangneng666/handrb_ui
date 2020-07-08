@@ -114,6 +114,11 @@ private:
     rbQthread* rbQthread_grepwawa;
     rbQthread* rbQthread_handClaw_gesture;
 
+    rbQthread* rbQthread_rbRunMoudlePrepare ;
+    rbQthread* rbQthread_rbCtlMoudlePrepare ;
+    rbQthread* rbQthread_rbImpMoudlePrepare ;
+    rbQthread* rbQthread_rbVoiceMoudlePrepare;
+
 public:
     //初始化Ros话题与服务
     void initRosToptic();
@@ -177,6 +182,10 @@ private:
     void thread_rbQthread_shakehand();//与人握手
     void thread_rbQthread_grepwawa();//抓娃娃
     void thread_rbQthread_handClaw_gesture(string gesture);//手势
+    void thread_rbQthread_rbRunMoudlePrepare();
+    void thread_rbQthread_rbCtlMoudlePrepare();
+    void thread_rbQthread_rbImpMoudlePrepare();
+    void thread_rbQthread_rbVoiceMoudlePrepare();
     //其他工具函数
     QImage cvMat2QImage(const cv::Mat& mat);
 

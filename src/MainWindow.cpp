@@ -607,6 +607,39 @@ void MainWindow::slot_timer_listen_status() {
         }
     }
     mutex_devDetector.unlock();
+
+    //刷新握手页面和抓娃娃页面状态
+    if(rbQthread_rbRunMoudlePrepare->isRunning()){
+        label_tabShakeHand_rbStatusValue->setPixmap(fitpixmap_greenLight);
+        label_tabgrabToy_rbStatusValue->setPixmap(fitpixmap_greenLight);
+
+    } else{
+        label_tabShakeHand_rbStatusValue->setPixmap(fitpixmap_redLight);
+        label_tabgrabToy_rbStatusValue->setPixmap(fitpixmap_redLight);
+    }
+
+    if(rbQthread_rbCtlMoudlePrepare->isRunning()){
+        label_tabShakeHand_rbCtlStatusValue->setPixmap(fitpixmap_greenLight);
+        label_tab_grabToy_rbCtlStatusValue->setPixmap(fitpixmap_greenLight);
+    } else{
+        label_tabShakeHand_rbCtlStatusValue->setPixmap(fitpixmap_redLight);
+        label_tab_grabToy_rbCtlStatusValue->setPixmap(fitpixmap_redLight);
+    }
+
+    if(rbQthread_rbImpMoudlePrepare->isRunning()){
+        label_tabShakeHand_impStatusValue->setPixmap(fitpixmap_greenLight);
+    } else{
+        label_tabShakeHand_impStatusValue->setPixmap(fitpixmap_redLight);
+    }
+
+    if(rbQthread_rbVoiceMoudlePrepare->isRunning()){
+        label_tabShakeHand_voiceStatusValue->setPixmap(fitpixmap_greenLight);
+        label_tabgrabToy_voiceStatusValue->setPixmap(fitpixmap_greenLight);
+    } else{
+        label_tabShakeHand_voiceStatusValue->setPixmap(fitpixmap_redLight);
+        label_tabgrabToy_voiceStatusValue->setPixmap(fitpixmap_redLight);
+    }
+
 }
 
 //void MainWindow::slot_btn_tabfunc_persondeteck() {

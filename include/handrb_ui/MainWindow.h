@@ -66,8 +66,6 @@ public:
     ~MainWindow();
 private:
     //全局变量
-    int index_sysMode=0;
-    int index_SysRunStep=0;
     QMutex mutex_devDetector;
     bool flag_switchPersonDecBtnText= false;
     bool flag_havedReset= false;
@@ -130,7 +128,6 @@ private:
 
 //*****************************槽函数*******************************************
     //主界面槽函数
-    void slot_btn_tabmain_devConnOrRviz();//设备连接
     void slot_btn_tabmain_beginRun();//开始运行
     void slot_btn_tabmain_sysStop();//设备停止
     void slot_btn_tabmain_sysReset();//系统复位
@@ -173,7 +170,6 @@ private:
     void slot_timer_listen_SysResetThread();
     void slot_timer_listenSysErrThread();
     //线程函数
-    void thread_rbQthread_devConnOrRviz();
     void thread_rbQthread_beginRun();
     void thread_rbQthread_sysStop();
     void thread_rbQthread_sysReset();
@@ -201,6 +197,7 @@ private slots:
     void showQmessageBox(infoLevel level,QString info);
     void showLightColor(QLabel* label,string color);
     void slot_combox_chooseMode_Clicked(int index);
+    void slot_cBox_tabShakeHand_setMode(int index);
     void slot_rbQthread_listenSysResetStart();//监听系统复位线程启动
     void slot_rbQthread_listenFinish();//监听线程资源释放
     void slot_runTimer(QTimer* timer);

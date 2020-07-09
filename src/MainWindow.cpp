@@ -43,8 +43,6 @@ void MainWindow::SysVarInit() {
     //初始化节点观察者ROS_INFO_STREAM("----back home ...----");
     ob_node.setparm(this);
     //线程初始化
-    rbQthread_devConnOrRviz = new rbQthread();
-    rbQthread_devConnOrRviz->setParm(this,&MainWindow::thread_rbQthread_devConnOrRviz);
 
     rbQthread_beginRun = new rbQthread();
     rbQthread_beginRun->setParm(this,&MainWindow::thread_rbQthread_beginRun);
@@ -114,7 +112,6 @@ void MainWindow::initRosToptic(){
 void MainWindow::signalAndSlot() {
 /*********************************控件与槽函数绑定*************************************************/
     //主界面
-    connect(btn_tabmain_devConnOrRviz,&QPushButton::clicked,this,&MainWindow::slot_btn_tabmain_devConnOrRviz);
     connect(btn_tabmain_beginRun,&QPushButton::clicked,this,&MainWindow::slot_btn_tabmain_beginRun);
     connect(btn_tabmain_sysStop,&QPushButton::clicked,this,&MainWindow::slot_btn_tabmain_sysStop);
     connect(btn_tabmain_sysReset,&QPushButton::clicked,this,&MainWindow::slot_btn_tabmain_sysReset);
@@ -135,6 +132,8 @@ void MainWindow::signalAndSlot() {
     connect(btn_tabShakeHand_begin,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_begin);
     connect(btn_tabShakeHand_stop,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_stop);
     connect(btn_tabShakeHand_close,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_close);
+    connect(cBox_tabShakeHand_setMode,SIGNAL(currentIndexChanged(int)), this, SLOT(slot_cBox_tabShakeHand_setMode(int )));
+
     //抓娃娃界面
     connect(btn_tabgrabToy_startRobRun,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_startRobRun);
     connect(btn_tabgrabToy_startRobCtl,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_startRobCtl);
@@ -158,23 +157,8 @@ void MainWindow::signalAndSlot() {
 /*************************************************************************************************/
 }
 
-//设备连接
-void MainWindow::slot_btn_tabmain_devConnOrRviz() {
-    cout<<"点击设备连接按钮"<<endl;
-    if(rbQthread_devConnOrRviz->isRunning()){
-        emit emitQmessageBox(infoLevel::warning,QString("请不要重复连接设备!"));
-    } else{
-        rbQthread_devConnOrRviz->start();
-        LOG("RUNINFO")->logInfoMessage("设备连接运行中");
-    }
-}
-
 //开始运行
 void MainWindow::slot_btn_tabmain_beginRun() {
-    if(index_SysRunStep!=1){
-        emit emitQmessageBox(infoLevel::warning,QString("请先进行设备连接或启动rviz!"));
-        return;
-    }
 
     if(rbQthread_beginRun->isRunning()){
         emit emitQmessageBox(infoLevel::warning,QString("请不要重复运行设备!"));
@@ -199,7 +183,6 @@ void MainWindow::slot_btn_tabmain_sysReset() {
         emit emitQmessageBox(infoLevel::warning, QString("程序正在执行中,请不要重复启动!"));
     } else
     {
-        index_SysRunStep=0;
         //掉机器人使能
         hsr_rosi_device::SetEnableSrv srv;
         srv.request.enable= false;
@@ -237,51 +220,17 @@ void MainWindow::slot_btn_tabmain_sysReset() {
     }
 }
 
-//设备连接子线程
-void MainWindow::thread_rbQthread_devConnOrRviz() {
-    switch (cbox_tabmain_chooseMode->currentIndex()){
-        case 0:
-            emit emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
-            break;
-        case 1:
-            //启动真机连接launch文件
-            index_SysRunStep=1;
-            system("roslaunch handrb_ui devconn.launch");
-            break;
-        case 2:
-            //启动rviz文件
-            index_SysRunStep=1;
-            system("roslaunch handrb_ui devconn.launch");
-            break;
-    }
-//            system("roslaunch co605_fight_moveit_config demo.launch");
-}
+
 //开始运行子线程
 void MainWindow::thread_rbQthread_beginRun() {
-    // switch (cbox_tabmain_robmode->currentIndex()){
-    //     case 0:
-    //         emit emitQmessageBox(infoLevel::information,QString("请选择机器人模式!"));
-    //         return;
-    //     case 1:
-    //         system("rosservice call /set_mode_srv \"mode: 0\"");
-    //         break;
-    //     case 2:
-    //         //上使能
-    //         hsr_rosi_device::ClearFaultSrv srv_clearF;
-    //         hsr_rosi_device::SetEnableSrv srv2_setE;
-    //         RobReset_client.call(srv_clearF);
-    //         RobReset_client.call(srv2_setE);
-    //         system("rosservice call /set_mode_srv \"mode: 1\"");
-    //         break;
-    // }
-    cout<<"开始运行模式"<<endl;
     switch (cbox_tabmain_chooseMode->currentIndex()){
         case 0:
             emit emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
             break;
         case 1:
             //启动真机运行launch文件
-            system("roslaunch handrb_ui handRobotGrab.launch");
+            system("roslaunch handrb_ui devconn.launch");
+//            system("roslaunch handrb_ui handRobotGrab.launch");
             //如果复位过程序,增需要重新启动本节点
             if(flag_havedReset){ob_node.rebootUiNode();}
             break;
@@ -289,7 +238,7 @@ void MainWindow::thread_rbQthread_beginRun() {
             //启动rviz程序
             //如果复位过程序,增需要重新启动本节点
             if(flag_havedReset){ob_node.rebootUiNode();}
-            system("roslaunch handrb_ui handRobotGrab.launch");
+            system("roslaunch handrb_ui devconn.launch");
             //启动rviz文件运行文件
             break;
     }
@@ -423,27 +372,21 @@ void MainWindow::slot_btn_tabrecord_clearRecord() {
 }
 
 void MainWindow::slot_combox_chooseMode_Clicked(int index) {
-    index_sysMode = index;
-    switch (index_sysMode) {
+    switch (index) {
         case 0:
-            btn_tabmain_devConnOrRviz->setEnabled(false);
             btn_tabmain_beginRun->setEnabled(false);
             btn_tabmain_sysStop->setEnabled(false);
             btn_tabmain_sysReset->setEnabled(false);
             break;
         case 1:
-            btn_tabmain_devConnOrRviz->setEnabled(true);
             btn_tabmain_beginRun->setEnabled(true);
             btn_tabmain_sysStop->setEnabled(true);
             btn_tabmain_sysReset->setEnabled(true);
-            btn_tabmain_devConnOrRviz->setText("设备连接");
             break;
         case 2:
-            btn_tabmain_devConnOrRviz->setEnabled(true);
             btn_tabmain_beginRun->setEnabled(true);
             btn_tabmain_sysStop->setEnabled(true);
             btn_tabmain_sysReset->setEnabled(true);
-            btn_tabmain_devConnOrRviz->setText("启动rviz");
             break;
     }
 }
@@ -609,10 +552,9 @@ void MainWindow::slot_timer_listen_status() {
     mutex_devDetector.unlock();
 
     //刷新握手页面和抓娃娃页面状态
-    if(rbQthread_rbRunMoudlePrepare->isRunning()){
+    if(RobEnable_Detector.status){
         label_tabShakeHand_rbStatusValue->setPixmap(fitpixmap_greenLight);
         label_tabgrabToy_rbStatusValue->setPixmap(fitpixmap_greenLight);
-
     } else{
         label_tabShakeHand_rbStatusValue->setPixmap(fitpixmap_redLight);
         label_tabgrabToy_rbStatusValue->setPixmap(fitpixmap_redLight);
@@ -788,7 +730,6 @@ void MainWindow::slot_btn_tabShakeHand_stop() {
     } else {
         rbQthread_sysStop->start();
     }
-
 }
 
 void MainWindow::slot_btn_tabShakeHand_close() {
@@ -843,7 +784,17 @@ void MainWindow::slot_btn_tabgrabToy_close() {
 }
 
 void MainWindow::thread_rbQthread_rbRunMoudlePrepare() {
-    system("rosrun handrb_ui rbRunMoudle.sh");
+//    system("rosrun handrb_ui rbRunMoudle.sh");
+     hsr_rosi_device::ClearFaultSrv srv_clearF;
+    hsr_rosi_device::SetEnableSrv srv2_setE;
+    srv2_setE.request.enable=true;
+    if(!RobErr_Detector.status){
+        RobReset_client.call(srv_clearF);
+    }
+    if(RobEnable_Detector.status){
+        RobReset_client.call(srv2_setE);
+    }
+    system("rosservice call /set_mode_srv \"mode: 1\"");
 }
 
 void MainWindow::thread_rbQthread_rbCtlMoudlePrepare() {
@@ -858,6 +809,24 @@ void MainWindow::thread_rbQthread_rbVoiceMoudlePrepare() {
     system("rosrun handrb_ui rbVoiceMoudle.sh");
 }
 
+void MainWindow::slot_cBox_tabShakeHand_setMode(int index) {
+ switch (index){
+     case 0:
+         label_tabShakeHand_voiceStatus->setVisible(false);
+         label_tabShakeHand_voiceStatusValue->setVisible(false);
+         btn_tabShakeHand_startvoice->setVisible(false);
+         btn_tabShakeHand_begin->setVisible(true);
+         break;
+     case 1:
+         label_tabShakeHand_voiceStatus->setVisible(true);
+         label_tabShakeHand_voiceStatusValue->setVisible(true);
+         btn_tabShakeHand_startvoice->setVisible(true);
+         btn_tabShakeHand_begin->setVisible(false);
+         break;
+
+ }
+}
+
 //重启UI节点
 void observer_rebootUiNode::rebootUiNode(){
     sp=new ros::AsyncSpinner(1);
@@ -865,4 +834,7 @@ void observer_rebootUiNode::rebootUiNode(){
     ros::start();
     mainwindow->initRosToptic();
 }
-
+//
+//rosservice call /clear_robot_fault "{}"
+//rosservice call /set_mode_srv "mode: 1"
+//rosservice call /set_robot_enable "enable: true"

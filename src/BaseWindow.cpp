@@ -249,17 +249,8 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     cbox_tabmain_chooseMode->setFixedSize(COMBOX_W,COMBOX_H);
     cbox_tabmain_chooseMode->setLayoutDirection(Qt::LeftToRight);
 
-    cbox_tabmain_robmode = new QComboBox(groupBox_tabmain_2);
-    cbox_tabmain_robmode->addItem(QString());
-    cbox_tabmain_robmode->addItem(QString());
-    cbox_tabmain_robmode->addItem(QString());
-    cbox_tabmain_robmode->setObjectName(QString::fromUtf8("cbox_tabmain_robmode"));
-    cbox_tabmain_robmode->setMaximumSize(QSize(200, 50));
-    cbox_tabmain_robmode->setFixedSize(COMBOX_W,COMBOX_H);
-    cbox_tabmain_robmode->setLayoutDirection(Qt::LeftToRight);
 
     horizontalLayout_6->addWidget(cbox_tabmain_chooseMode);
-    horizontalLayout_6->addWidget(cbox_tabmain_robmode);
 
 
     hLayout_tabmain_2->addWidget(groupBox_tabmain_2);
@@ -277,11 +268,6 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     horizontalLayout_7->setSpacing(6);
     horizontalLayout_7->setContentsMargins(11, 11, 11, 11);
     horizontalLayout_7->setObjectName(QString::fromUtf8("horizontalLayout_7"));
-    btn_tabmain_devConnOrRviz = new QPushButton(groupBox_tabmain_3);
-    btn_tabmain_devConnOrRviz->setObjectName(QString::fromUtf8("btn_tabmain_devConnOrRviz"));
-    btn_tabmain_devConnOrRviz->setMaximumSize(QSize(150, 50));
-    btn_tabmain_devConnOrRviz->setFixedSize(BTN_W,BTN_H);
-    horizontalLayout_7->addWidget(btn_tabmain_devConnOrRviz);
 
     btn_tabmain_beginRun = new QPushButton(groupBox_tabmain_3);
     btn_tabmain_beginRun->setObjectName(QString::fromUtf8("btn_tabmain_beginRun"));
@@ -302,7 +288,6 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     btn_tabmain_sysReset->setMaximumSize(QSize(150, 50));
     btn_tabmain_sysReset->setFixedSize(BTN_W,BTN_H);
 
-    btn_tabmain_devConnOrRviz->setEnabled(false);
     btn_tabmain_beginRun->setEnabled(false);
     btn_tabmain_sysStop->setEnabled(false);
     btn_tabmain_sysReset->setEnabled(false);
@@ -417,6 +402,25 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     verticalLayout = new QVBoxLayout();
     verticalLayout->setSpacing(6);
     verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
+
+    gBox_tabShakeHand_mode = new QGroupBox(tab_shakeHand);
+    gBox_tabShakeHand_mode->setObjectName(QString::fromUtf8("gBox_tabShakeHand_mode"));
+    gBox_tabShakeHand_mode->setStyleSheet(groupBox_qss);
+    horizontalLayout_3 = new QHBoxLayout(gBox_tabShakeHand_mode);
+    horizontalLayout_3->setSpacing(6);
+    horizontalLayout_3->setContentsMargins(11, 11, 11, 11);
+    horizontalLayout_3->setObjectName(QString::fromUtf8("horizontalLayout_3"));
+    cBox_tabShakeHand_setMode = new QComboBox(gBox_tabShakeHand_mode);
+    cBox_tabShakeHand_setMode->addItem(QString());
+    cBox_tabShakeHand_setMode->addItem(QString());
+    cBox_tabShakeHand_setMode->setObjectName(QString::fromUtf8("cBox_tabShakeHand_setMode"));
+    cBox_tabShakeHand_setMode->setMaximumSize(QSize(200, 50));
+
+    horizontalLayout_3->addWidget(cBox_tabShakeHand_setMode);
+
+
+    verticalLayout->addWidget(gBox_tabShakeHand_mode);
+
     gBox_tabShakeHand_status = new QGroupBox(tab_shakeHand);
     gBox_tabShakeHand_status->setObjectName(QString::fromUtf8("gBox_tabShakeHand_status"));
     gBox_tabShakeHand_status->setStyleSheet(groupBox_qss);
@@ -513,23 +517,6 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
 
     verticalLayout->addWidget(gBox_tabShakeHand_status);
 
-    gBox_tabShakeHand_mode = new QGroupBox(tab_shakeHand);
-    gBox_tabShakeHand_mode->setObjectName(QString::fromUtf8("gBox_tabShakeHand_mode"));
-    gBox_tabShakeHand_mode->setStyleSheet(groupBox_qss);
-    horizontalLayout_3 = new QHBoxLayout(gBox_tabShakeHand_mode);
-    horizontalLayout_3->setSpacing(6);
-    horizontalLayout_3->setContentsMargins(11, 11, 11, 11);
-    horizontalLayout_3->setObjectName(QString::fromUtf8("horizontalLayout_3"));
-    cBox_tabShakeHand_setMode = new QComboBox(gBox_tabShakeHand_mode);
-    cBox_tabShakeHand_setMode->addItem(QString());
-    cBox_tabShakeHand_setMode->addItem(QString());
-    cBox_tabShakeHand_setMode->setObjectName(QString::fromUtf8("cBox_tabShakeHand_setMode"));
-    cBox_tabShakeHand_setMode->setMaximumSize(QSize(200, 50));
-
-    horizontalLayout_3->addWidget(cBox_tabShakeHand_setMode);
-
-
-    verticalLayout->addWidget(gBox_tabShakeHand_mode);
 
     gBox_tabShakeHand_func = new QGroupBox(tab_shakeHand);
     gBox_tabShakeHand_func->setObjectName(QString::fromUtf8("gBox_tabShakeHand_func"));
@@ -806,6 +793,11 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     statusBar->setObjectName(QString::fromUtf8("statusBar"));
     MainWindow->setStatusBar(statusBar);
 
+    //
+    label_tabShakeHand_voiceStatus->setVisible(false);
+    label_tabShakeHand_voiceStatusValue->setVisible(false);
+    btn_tabShakeHand_startvoice->setVisible(false);
+
     retranslateUi(MainWindow);
 //    QMetaObject::connectSlotsByName(MainWindow);
 }
@@ -836,12 +828,7 @@ void BaseWindow::retranslateUi(QMainWindow *MainWindow) {
     cbox_tabmain_chooseMode->setItemText(1, QApplication::translate("MainWindow", "\347\234\237\346\234\272\350\277\220\350\241\214", nullptr));
     cbox_tabmain_chooseMode->setItemText(2, QApplication::translate("MainWindow", "\344\273\277\347\234\237\350\277\220\350\241\214", nullptr));
 
-    cbox_tabmain_robmode->setItemText(0, QApplication::translate("MainWindow", "\346\234\272\345\231\250\344\272\272\346\250\241\345\274\217", nullptr));
-    cbox_tabmain_robmode->setItemText(1, QApplication::translate("MainWindow", "\347\202\271\345\212\250\346\250\241\345\274\2170", nullptr));
-    cbox_tabmain_robmode->setItemText(2, QApplication::translate("MainWindow", "\351\232\217\345\212\250\346\250\241\345\274\2171", nullptr));
-
     groupBox_tabmain_3->setTitle(QApplication::translate("MainWindow", "\347\263\273\347\273\237\345\212\237\350\203\275", nullptr));
-    btn_tabmain_devConnOrRviz->setText(QApplication::translate("MainWindow", "\350\256\276\345\244\207\350\277\236\346\216\245", nullptr));
     btn_tabmain_beginRun->setText(QApplication::translate("MainWindow", "\345\274\200\345\247\213\350\277\220\350\241\214", nullptr));
     btn_tabmain_sysStop->setText(QApplication::translate("MainWindow", "\350\256\276\345\244\207\345\201\234\346\255\242", nullptr));
     btn_tabmain_sysReset->setText(QApplication::translate("MainWindow", "\347\263\273\347\273\237\345\244\215\344\275\215", nullptr));

@@ -236,6 +236,21 @@ void MainWindow::slot_timer_listen_status() {
             mutex_devDetector.unlock();
     }
 
+
+
+    //机器人故障时下使能
+    if(!Holdflag_RobDownEnable){
+        hsr_rosi_device::SetEnableSrv srv2_setE;
+        srv2_setE.request.enable=false;
+        if(!RobErr_Detector.status){
+            hsr_rosi_device::ClearFaultSrv srv_clearF;
+            RobReset_client.call(srv_clearF);
+            RobEnable_client.call(srv2_setE);
+            Holdflag_RobDownEnable=true;
+        }
+    }
+
+
     //机器人状态发布
     hsr_rosi_device::setModeSrv srv;
     if(rbQthread_rbImpMoudlePrepare->isRunning())
@@ -259,6 +274,7 @@ void MainWindow::slot_timer_listen_status() {
     {
         if(!Holdflag_RobSetMode)
         {
+            system("rosservice call /stop_motion");
             srv.request.mode=0;
             RobSetMode_client.call(srv);
             Holdflag_RobSetMode=true;
@@ -1018,8 +1034,11 @@ void MainWindow::thread_rbQthread_LisionRbErrInfo() {
 void MainWindow::slot_btn_tabShakeHand_shakeHandEnd() {
     if(rbQthread_rbImpMoudlePrepare->isRunning()){
         system("rosservice call /stop_motion");
-        sleep(2);
     }
+
+    hsr_rosi_device::setModeSrv srv;
+    srv.request.mode=0;
+    RobSetMode_client.call(srv);
     std_msgs::Bool msg;
     msg.data=true;
     shakehandOver_publisher.publish(msg);

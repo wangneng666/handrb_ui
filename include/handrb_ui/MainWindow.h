@@ -77,6 +77,8 @@ private:
     bool flag_rbCtlBusy= false;    //机器人控制模块繁忙状态
     bool flag_rbCtlStartUp= false; //
     bool Holdflag_RobSetMode= false; //
+    bool Holdflag_RobDownEnable= false; //
+
     //加入节点观察者
     observer_rebootUiNode ob_node;
     //设备监控

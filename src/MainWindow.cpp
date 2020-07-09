@@ -94,6 +94,7 @@ void MainWindow::initRosToptic(){
     //话题
     flag_forceSensor_publisher=Node->advertise<std_msgs::Bool>("forceSensor_moveFlag",1);
     shakehandOver_publisher=Node->advertise<std_msgs::Bool>("shake_over",1);
+    robStatusSend_publisher=Node->advertise<std_msgs::Bool>("uipub_robStatus",1);
     impedenceLive_publisher=Node->advertise<std_msgs::Bool>("uipub_impedenceLive",1);
     rbGoHome_publisher=Node->advertise<std_msgs::Int8>("homePoint",1);
     visionDetech_publisher=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
@@ -234,7 +235,45 @@ void MainWindow::slot_timer_listen_status() {
             impedenceConn_Detector.status= true;
             mutex_devDetector.unlock();
     }
-    
+
+    //机器人状态发布
+    hsr_rosi_device::setModeSrv srv;
+    if(rbQthread_rbImpMoudlePrepare->isRunning())
+    {
+        if(!RobErr_Detector.status)
+        {
+            system("rosservice call /stop_motion");
+            srv.request.mode=0;
+            if(RobSetMode_client.call(srv)){
+                if(srv.response.finsh)
+                {
+                    emit emitQmessageBox(infoLevel::warning, "模式设置为点动模式!");
+                }
+            }else
+            {
+                emit emitQmessageBox(infoLevel::warning, "模式设置服务连接失败!");
+            }
+        }
+    }
+    else
+    {
+        if(!Holdflag_RobSetMode)
+        {
+            srv.request.mode=0;
+            RobSetMode_client.call(srv);
+            Holdflag_RobSetMode=true;
+        }
+    }
+
+
+    std_msgs::Bool rb_msg;
+    if(RobErr_Detector.status){
+        rb_msg.data= true;
+        robStatusSend_publisher.publish(rb_msg);
+    } else{
+        rb_msg.data= false;
+        robStatusSend_publisher.publish(rb_msg);
+    }
     //机器人控制模块繁忙状态
     if(RobEnable_Detector.status&&flag_rbCtlBusy){
         label_tabmain_rbBusyStatusValue->setPixmap(fitpixmap_greenLight);
@@ -761,6 +800,7 @@ void MainWindow::slot_btn_tabShakeHand_startimpedence() {
     } else {
         rbQthread_rbImpMoudlePrepare->start();
     }
+    Holdflag_RobSetMode= false;
 }
 
 void MainWindow::slot_btn_tabShakeHand_startvoice() {

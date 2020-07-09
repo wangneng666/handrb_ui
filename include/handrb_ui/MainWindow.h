@@ -76,6 +76,7 @@ private:
     bool flag_impedenceLive= false;//阻抗随动状态
     bool flag_rbCtlBusy= false;    //机器人控制模块繁忙状态
     bool flag_rbCtlStartUp= false; //
+    bool Holdflag_RobSetMode= false; //
     //加入节点观察者
     observer_rebootUiNode ob_node;
     //设备监控
@@ -113,6 +114,7 @@ private:
     ros::Publisher flag_forceSensor_publisher;
     ros::Publisher impedenceLive_publisher;
     ros::Publisher shakehandOver_publisher;
+    ros::Publisher robStatusSend_publisher;
     //线程句柄
     vector<rbQthread*> rbQthreadList;
     rbQthread* rbQthread_devConnOrRviz;

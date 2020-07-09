@@ -23,6 +23,7 @@
 #include "hsr_rosi_device/SetEnableSrv.h"
 #include "industrial_msgs/RobotStatus.h"
 #include "geometry_msgs/Wrench.h"
+#include "hsr_rosi_device/setModeSrv.h"
 //标准库
 #include "ros/ros.h"
 #include <iostream>
@@ -95,6 +96,7 @@ private:
     ros::ServiceClient handClaw_shakeHand_client;
     ros::ServiceClient handClaw_grabDoll_client;
     ros::ServiceClient rob_goHome_client;
+    ros::ServiceClient RobSetMode_client;
     ros::Subscriber voiceSolveRes_subcriber;
     ros::Subscriber personDetectRes_subcriber;
     ros::Subscriber grabDollImagRes_subcriber;

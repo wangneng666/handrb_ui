@@ -92,7 +92,7 @@ void MainWindow::initRosToptic(){
     //话题
     flag_forceSensor_publisher=Node->advertise<std_msgs::Bool>("forceSensor_moveFlag",1);
     impedenceLive_publisher=Node->advertise<std_msgs::Bool>("uipub_impedenceLive",1);
-    rbGoHome_publisher=Node->advertise<std_msgs::Int8>("/back_home",1);
+    rbGoHome_publisher=Node->advertise<std_msgs::Int8>("homePoint",1);
     visionDetech_publisher=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
     camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
     rbCtlBusy_subscriber=Node->subscribe<std_msgs::Bool>("rbCtlBusy_status",1,&MainWindow::callback_rbCtlBusy_status_subscriber, this);
@@ -105,12 +105,14 @@ void MainWindow::initRosToptic(){
     impedenceLive_subscriber=Node->subscribe<std_msgs::Bool>("impedence_live",1,&MainWindow::callback_impedenceLive_subscriber,this);
 
     //服务
-    RobReset_client = Node->serviceClient<hsr_rosi_device::ClearFaultSrv>("clear_robot_fault");
-    RobEnable_client = Node->serviceClient<hsr_rosi_device::SetEnableSrv>("set_robot_enable");
+    RobReset_client = Node->serviceClient<hsr_rosi_device::ClearFaultSrv>("/clear_robot_fault");
+    RobEnable_client = Node->serviceClient<hsr_rosi_device::SetEnableSrv>("/set_robot_enable");
     handClaw_gesture_client = Node->serviceClient<rb_msgAndSrv::rb_string>("handClaw_gesture");
     handClaw_shakeHand_client = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("handClaw_shakeHand");
     handClaw_grabDoll_client = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("handClaw_grabDoll");
     rob_goHome_client = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("rob_goHome");
+    RobSetMode_client = Node->serviceClient<hsr_rosi_device::setModeSrv>("/set_mode_srv");
+
 }
 
 void MainWindow::signalAndSlot() {
@@ -214,6 +216,20 @@ void MainWindow::slot_timer_listen_status() {
         label_tabShakeHand_voiceStatusValue->setPixmap(fitpixmap_redLight);
         label_tabgrabToy_voiceStatusValue->setPixmap(fitpixmap_redLight);
     }
+    //刷新机器人控制模块状态
+    if(rbQthread_rbCtlMoudlePrepare->isRunning()){
+        flag_rbCtlStartUp=true;
+    }else
+    {
+        flag_rbCtlStartUp=false;
+    }
+    if(rbQthread_rbImpMoudlePrepare->isRunning()){
+            mutex_devDetector.lock();
+            impedenceConn_Detector.lifeNum=100;
+            impedenceConn_Detector.status= true;
+            mutex_devDetector.unlock();
+    }
+    
     //机器人控制模块繁忙状态
     if(RobEnable_Detector.status&&flag_rbCtlBusy){
         label_tabmain_rbBusyStatusValue->setPixmap(fitpixmap_greenLight);
@@ -231,7 +247,6 @@ void MainWindow::slot_timer_listen_status() {
         msg_imp.data= false;
         impedenceLive_publisher.publish(msg_imp);
         flag_impedenceLive= false;
-
     }
 }
 
@@ -266,13 +281,14 @@ void MainWindow::slot_btn_tabmain_sysReset() {
         srv.request.enable= false;
         RobEnable_client.call(srv);
         //释放线程资源
-        for(auto thread:rbQthreadList){
-            if(thread->isRunning()){
-                thread->terminate();
-                thread->wait(1000*1);
-                cout<<"释放线程资源"<<endl;
-            }
-        }
+        // for(auto thread:rbQthreadList){
+        //     if(thread->isRunning()){
+        //         thread->terminate();
+        //         thread->wait(1000*1);
+        //         cout<<"释放线程资源"<<endl;
+        //     }
+        // }
+
         //启动复位线程,此线程可重复使用
 //        rbQthread_sysReset->start();
         //开辟临时线程
@@ -754,7 +770,20 @@ void MainWindow::slot_btn_tabShakeHand_stop() {
 }
 
 void MainWindow::slot_btn_tabShakeHand_close() {
-    flag_rbCtlStartUp= false;
+    if(rbQthread_rbImpMoudlePrepare->isRunning()){
+        system("rosservice call /stop_motion");
+    }
+    hsr_rosi_device::setModeSrv srv;
+    srv.request.mode=0;
+    if(RobSetMode_client.call(srv)){
+        if(srv.response.finsh){
+            emit emitQmessageBox(infoLevel::warning, "模式设置为点动模式!");
+        }
+    }else
+    {
+        emit emitQmessageBox(infoLevel::warning, "模式设置服务连接失败!");
+    }
+    
 }
 
 
@@ -810,18 +839,26 @@ void MainWindow::thread_rbQthread_rbRunMoudlePrepare() {
     if(!RobErr_Detector.status){
         RobReset_client.call(srv_clearF);
     }
-    if(RobEnable_Detector.status){
-        RobReset_client.call(srv2_setE);
+    if(!RobEnable_Detector.status){
+        RobEnable_client.call(srv2_setE);
     }
-    system("rosservice call /set_mode_srv \"mode: 1\"");
 }
 
 void MainWindow::thread_rbQthread_rbCtlMoudlePrepare() {
-    flag_rbCtlStartUp= true;
     system("rosrun handrb_ui rbCtlMoudle.sh");
 }
 
 void MainWindow::thread_rbQthread_rbImpMoudlePrepare() {
+    hsr_rosi_device::setModeSrv srv;
+    srv.request.mode=1;
+    if(RobSetMode_client.call(srv)){
+        if(srv.response.finsh){
+            emit emitQmessageBox(infoLevel::warning, "模式设置为随动模式!");
+        }
+    }else
+    {
+        emit emitQmessageBox(infoLevel::warning, "模式设置服务连接失败!");
+    }    
     system("rosrun handrb_ui rbImpMoudle.sh");
 }
 

@@ -99,10 +99,10 @@ public:
     QLabel *label_tabmain_5fConnStatusValue;
     QLabel *label_tabmain_TsensorStatus;
     QLabel *label_tabmain_TsensorStatusValue;
-    QLabel *label_13;
-    QLabel *label_14;
-    QLabel *label_15;
-    QLabel *label_16;
+    QLabel *label_tabmain_impedenceConnStatus;
+    QLabel *label_tabmain_impedenceConnStatusValue;
+    QLabel *label_tabmain_rbBusyStatus;
+    QLabel *label_tabmain_rbBusyStatusValue;
     QHBoxLayout *hLayout_tabmain_2;
     QGroupBox *groupBox_tabmain_2;
     QHBoxLayout *horizontalLayout_6;

@@ -70,6 +70,9 @@ private:
     bool flag_switchPersonDecBtnText= false;
     bool flag_havedReset= false;
     bool flag_rbEnable= false;
+    bool flag_impedenceLive= false;//阻抗随动状态
+    bool flag_rbCtlBusy= false;    //机器人控制模块繁忙状态
+    bool flag_rbCtlStartUp= false; //
     //加入节点观察者
     observer_rebootUiNode ob_node;
     //设备监控
@@ -80,6 +83,7 @@ private:
     devDetector cameraConn_Detector{"cameraConn_Detector",0, false,label_tabmain_caConnStatusValue}; //相机连接状态
     devDetector handClawConn_Detector{"handClawConn_Detector",0, false,label_tabmain_5fConnStatusValue}; //五指夹爪连接状态
     devDetector forceSensorConn_Detector{"forceSensorConn_Detector",0, false,label_tabmain_TsensorStatusValue}; //六轴力传感器连接状态
+    devDetector impedenceConn_Detector{"impedenceConn_Detector",0, false,label_tabmain_impedenceConnStatusValue}; //阻抗连接状态
     //定时器
     QTimer* Timer_listen_status;
     QTimer* Timer_listen_SysResetThread;
@@ -97,9 +101,12 @@ private:
     ros::Subscriber robStatus_subscriber;
     ros::Subscriber camera_subscriber;
     ros::Subscriber forceSensor_subscriber;
+    ros::Subscriber impedenceLive_subscriber;
+    ros::Subscriber rbCtlBusy_subscriber;
     ros::Publisher visionDetech_publisher;
     ros::Publisher rbGoHome_publisher;
     ros::Publisher flag_forceSensor_publisher;
+    ros::Publisher impedenceLive_publisher;
     //线程句柄
     vector<rbQthread*> rbQthreadList;
     rbQthread* rbQthread_devConnOrRviz;
@@ -165,6 +172,8 @@ private:
     void callback_robStatus_subscriber(const industrial_msgs::RobotStatus::ConstPtr robot_status);
     void callback_camera_subscriber(const sensor_msgs::Image::ConstPtr& msg);
     void callback_forceSensor_subscriber(geometry_msgs::Wrench msg);
+    void callback_impedenceLive_subscriber(std_msgs::Bool msg);
+    void callback_rbCtlBusy_status_subscriber(std_msgs::Bool msg);
     //定时器槽函数
     void slot_timer_listen_status();
     void slot_timer_listen_SysResetThread();
@@ -182,8 +191,10 @@ private:
     void thread_rbQthread_rbCtlMoudlePrepare();
     void thread_rbQthread_rbImpMoudlePrepare();
     void thread_rbQthread_rbVoiceMoudlePrepare();
-    //其他工具函数
+    //其他函数
     QImage cvMat2QImage(const cv::Mat& mat);
+    bool sendSignal_RbPreparePose();//发动机器人准备握手动作信号
+    bool sendSignal_RbGrabtoy();//发动机器人抓娃娃信号
 
 signals:
     void emitTextControl(QString text) const;

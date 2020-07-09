@@ -23,6 +23,7 @@ void MainWindow::SysVarInit() {
     devDetectorList.push_back(&cameraConn_Detector);
     devDetectorList.push_back(&handClawConn_Detector);
     devDetectorList.push_back(&forceSensorConn_Detector);
+    devDetectorList.push_back(&impedenceConn_Detector);
 
     //定时器初始化
     Timer_listen_status = new QTimer(this);
@@ -90,15 +91,18 @@ void MainWindow::SysVarInit() {
 void MainWindow::initRosToptic(){
     //话题
     flag_forceSensor_publisher=Node->advertise<std_msgs::Bool>("forceSensor_moveFlag",1);
+    impedenceLive_publisher=Node->advertise<std_msgs::Bool>("uipub_impedenceLive",1);
     rbGoHome_publisher=Node->advertise<std_msgs::Int8>("/back_home",1);
     visionDetech_publisher=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
     camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
+    rbCtlBusy_subscriber=Node->subscribe<std_msgs::Bool>("rbCtlBusy_status",1,&MainWindow::callback_rbCtlBusy_status_subscriber, this);
 //    camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
     forceSensor_subscriber=Node->subscribe<geometry_msgs::Wrench>("daq_data", 1000, &MainWindow::callback_forceSensor_subscriber, this);
 //    voiceSolveRes_subcriber=Node->subscribe<std_msgs::String>("voiceSolve_res",1,&MainWindow::callback_voiceSolveRes_subcriber, this);
 //    personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
 //    grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
     robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
+    impedenceLive_subscriber=Node->subscribe<std_msgs::Bool>("impedence_live",1,&MainWindow::callback_impedenceLive_subscriber,this);
 
     //服务
     RobReset_client = Node->serviceClient<hsr_rosi_device::ClearFaultSrv>("clear_robot_fault");
@@ -155,6 +159,80 @@ void MainWindow::signalAndSlot() {
 //    connect(rbQthread_devConnOrRviz, SIGNAL(signal_SendMsgBox(infoLevel ,QString)), this,SLOT(thread_slot_devConnOrRviz()));
 
 /*************************************************************************************************/
+}
+
+//监听系统各设备状态
+void MainWindow::slot_timer_listen_status() {
+    mutex_devDetector.lock();
+    for (auto detector : devDetectorList)
+    {
+        if(detector->lifeNum>0)
+        {
+            detector->lifeNum-=5;
+        } else
+        {
+            detector->lifeNum=0;
+            detector->status= false;
+        }
+        //刷新检测器标签状态
+        if(detector->status)
+        {
+            emit emitLightColor(detector->lable_showStatus,"green");
+        } else
+        {
+            emit emitLightColor(detector->lable_showStatus,"red");
+        }
+    }
+    mutex_devDetector.unlock();
+    //刷新页面标签状态
+    if(RobEnable_Detector.status){
+        label_tabShakeHand_rbStatusValue->setPixmap(fitpixmap_greenLight);
+        label_tabgrabToy_rbStatusValue->setPixmap(fitpixmap_greenLight);
+    } else{
+        label_tabShakeHand_rbStatusValue->setPixmap(fitpixmap_redLight);
+        label_tabgrabToy_rbStatusValue->setPixmap(fitpixmap_redLight);
+    }
+
+    if(rbQthread_rbCtlMoudlePrepare->isRunning()){
+        label_tabShakeHand_rbCtlStatusValue->setPixmap(fitpixmap_greenLight);
+        label_tab_grabToy_rbCtlStatusValue->setPixmap(fitpixmap_greenLight);
+    } else{
+        label_tabShakeHand_rbCtlStatusValue->setPixmap(fitpixmap_redLight);
+        label_tab_grabToy_rbCtlStatusValue->setPixmap(fitpixmap_redLight);
+    }
+
+    if(rbQthread_rbImpMoudlePrepare->isRunning()){
+        label_tabShakeHand_impStatusValue->setPixmap(fitpixmap_greenLight);
+    } else{
+        label_tabShakeHand_impStatusValue->setPixmap(fitpixmap_redLight);
+    }
+
+    if(rbQthread_rbVoiceMoudlePrepare->isRunning()){
+        label_tabShakeHand_voiceStatusValue->setPixmap(fitpixmap_greenLight);
+        label_tabgrabToy_voiceStatusValue->setPixmap(fitpixmap_greenLight);
+    } else{
+        label_tabShakeHand_voiceStatusValue->setPixmap(fitpixmap_redLight);
+        label_tabgrabToy_voiceStatusValue->setPixmap(fitpixmap_redLight);
+    }
+    //机器人控制模块繁忙状态
+    if(RobEnable_Detector.status&&flag_rbCtlBusy){
+        label_tabmain_rbBusyStatusValue->setPixmap(fitpixmap_greenLight);
+    }
+    else{
+        label_tabmain_rbBusyStatusValue->setPixmap(fitpixmap_redLight);
+    }
+    //发布阻抗模块运行状态
+    std_msgs::Bool msg_imp;
+    if(impedenceConn_Detector.status){
+        msg_imp.data=true;
+        impedenceLive_publisher.publish(msg_imp);
+        flag_impedenceLive= true;
+    } else{
+        msg_imp.data= false;
+        impedenceLive_publisher.publish(msg_imp);
+        flag_impedenceLive= false;
+
+    }
 }
 
 //开始运行
@@ -527,62 +605,6 @@ void MainWindow::showLightColor(QLabel *label, string color) {
     }
 }
 
-//监听系统各设备状态
-void MainWindow::slot_timer_listen_status() {
-    mutex_devDetector.lock();
-    for (auto detector : devDetectorList)
-    {
-        if(detector->lifeNum>0)
-        {
-            detector->lifeNum-=5;
-        } else
-        {
-            detector->lifeNum=0;
-            detector->status= false;
-        }
-        //刷新检测器标签状态
-        if(detector->status)
-        {
-            emit emitLightColor(detector->lable_showStatus,"green");
-        } else
-        {
-            emit emitLightColor(detector->lable_showStatus,"red");
-        }
-    }
-    mutex_devDetector.unlock();
-
-    //刷新握手页面和抓娃娃页面状态
-    if(RobEnable_Detector.status){
-        label_tabShakeHand_rbStatusValue->setPixmap(fitpixmap_greenLight);
-        label_tabgrabToy_rbStatusValue->setPixmap(fitpixmap_greenLight);
-    } else{
-        label_tabShakeHand_rbStatusValue->setPixmap(fitpixmap_redLight);
-        label_tabgrabToy_rbStatusValue->setPixmap(fitpixmap_redLight);
-    }
-
-    if(rbQthread_rbCtlMoudlePrepare->isRunning()){
-        label_tabShakeHand_rbCtlStatusValue->setPixmap(fitpixmap_greenLight);
-        label_tab_grabToy_rbCtlStatusValue->setPixmap(fitpixmap_greenLight);
-    } else{
-        label_tabShakeHand_rbCtlStatusValue->setPixmap(fitpixmap_redLight);
-        label_tab_grabToy_rbCtlStatusValue->setPixmap(fitpixmap_redLight);
-    }
-
-    if(rbQthread_rbImpMoudlePrepare->isRunning()){
-        label_tabShakeHand_impStatusValue->setPixmap(fitpixmap_greenLight);
-    } else{
-        label_tabShakeHand_impStatusValue->setPixmap(fitpixmap_redLight);
-    }
-
-    if(rbQthread_rbVoiceMoudlePrepare->isRunning()){
-        label_tabShakeHand_voiceStatusValue->setPixmap(fitpixmap_greenLight);
-        label_tabgrabToy_voiceStatusValue->setPixmap(fitpixmap_greenLight);
-    } else{
-        label_tabShakeHand_voiceStatusValue->setPixmap(fitpixmap_redLight);
-        label_tabgrabToy_voiceStatusValue->setPixmap(fitpixmap_redLight);
-    }
-
-}
 
 //void MainWindow::slot_btn_tabfunc_persondeteck() {
 //    mutex_devDetector.lock();
@@ -716,10 +738,9 @@ void MainWindow::slot_btn_tabShakeHand_startvoice() {
 }
 
 void MainWindow::slot_btn_tabShakeHand_begin() {
-    if (rbQthread_shakehand->isRunning()) {
-        emit emitQmessageBox(infoLevel::warning, "握手正在执行中,请不要重复启动!");
-    } else {
-        rbQthread_shakehand->start();
+    bool flag = sendSignal_RbPreparePose();
+    if(flag){
+        emit emitQmessageBox(infoLevel::information,"握手抬起指令发出");
     }
 
 }
@@ -733,7 +754,7 @@ void MainWindow::slot_btn_tabShakeHand_stop() {
 }
 
 void MainWindow::slot_btn_tabShakeHand_close() {
-
+    flag_rbCtlStartUp= false;
 }
 
 
@@ -763,12 +784,10 @@ void MainWindow::slot_btn_tabgrabToy_startvoice() {
 }
 
 void MainWindow::slot_btn_tabgrabToy_run() {
-    if (rbQthread_grepwawa->isRunning()) {
-        emit emitQmessageBox(infoLevel::warning, "停止正在执行中,请不要重复启动!");
-    } else {
-        rbQthread_grepwawa->start();
+    bool flag= sendSignal_RbGrabtoy();
+    if(flag){
+        emit emitQmessageBox(infoLevel::warning, "抓娃娃指令已经发出!");
     }
-
 }
 
 void MainWindow::slot_btn_tabgrabToy_stop() {
@@ -798,6 +817,7 @@ void MainWindow::thread_rbQthread_rbRunMoudlePrepare() {
 }
 
 void MainWindow::thread_rbQthread_rbCtlMoudlePrepare() {
+    flag_rbCtlStartUp= true;
     system("rosrun handrb_ui rbCtlMoudle.sh");
 }
 
@@ -825,6 +845,65 @@ void MainWindow::slot_cBox_tabShakeHand_setMode(int index) {
          break;
 
  }
+}
+
+void MainWindow::callback_impedenceLive_subscriber(std_msgs::Bool msg) {
+    mutex_devDetector.lock();
+    impedenceConn_Detector.lifeNum=100;
+    impedenceConn_Detector.status= true;
+    mutex_devDetector.unlock();
+}
+
+void MainWindow::callback_rbCtlBusy_status_subscriber(std_msgs::Bool msg) {
+    //机器人控制模块运动中
+    if(msg.data){
+        flag_rbCtlBusy= true;
+    } else{
+        flag_rbCtlBusy= false;
+    }
+}
+
+bool MainWindow::sendSignal_RbPreparePose() {
+    if(!RobEnable_Detector.status){
+        emit emitQmessageBox(infoLevel::warning, "机器人未上使能!");
+        return false;
+    }
+    if(!flag_rbCtlStartUp){
+        emit emitQmessageBox(infoLevel::warning, "机器人控制模块未启动!");
+        return false;
+    }
+    if(flag_rbCtlBusy){
+        emit emitQmessageBox(infoLevel::warning, "机器人不在空闲中!");
+        return false;
+    }
+    if (rbQthread_shakehand->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "握手正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_shakehand->start();
+    }
+    return true;
+
+}
+
+bool MainWindow::sendSignal_RbGrabtoy() {
+    if(!RobEnable_Detector.status){
+        emit emitQmessageBox(infoLevel::warning, "机器人未上使能!");
+        return false;
+    }
+    if(!flag_rbCtlStartUp){
+        emit emitQmessageBox(infoLevel::warning, "机器人控制模块未启动!");
+        return false;
+    }
+    if(flag_rbCtlBusy){
+        emit emitQmessageBox(infoLevel::warning, "机器人不在空闲中!");
+        return false;
+    }
+    if (rbQthread_grepwawa->isRunning()) {
+        emit emitQmessageBox(infoLevel::warning, "停止正在执行中,请不要重复启动!");
+    } else {
+        rbQthread_grepwawa->start();
+    }
+    return true;
 }
 
 //重启UI节点

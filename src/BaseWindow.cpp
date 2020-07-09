@@ -193,33 +193,33 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
 
     gLayout_tabmain_1->addWidget(label_tabmain_TsensorStatusValue, 1, 4, 1, 1);
 
-    label_13 = new QLabel(groupBox_tabmain_1);
-    label_13->setObjectName(QString::fromUtf8("label_13"));
-    label_13->setMaximumSize(QSize(150, 50));
-    label_13->setLayoutDirection(Qt::RightToLeft);
+    label_tabmain_impedenceConnStatus = new QLabel(groupBox_tabmain_1);
+    label_tabmain_impedenceConnStatus->setObjectName(QString::fromUtf8("label_tabmain_impedenceConnStatus"));
+    label_tabmain_impedenceConnStatus->setMaximumSize(QSize(150, 50));
+    label_tabmain_impedenceConnStatus->setLayoutDirection(Qt::RightToLeft);
 
-    gLayout_tabmain_1->addWidget(label_13, 1, 5, 1, 1);
+    gLayout_tabmain_1->addWidget(label_tabmain_impedenceConnStatus, 1, 5, 1, 1);
 
-    label_14 = new QLabel(groupBox_tabmain_1);
-    label_14->setObjectName(QString::fromUtf8("label_14"));
-    label_14->setMaximumSize(QSize(150, 50));
-    label_14->setPixmap(fitpixmap_redLight);
+    label_tabmain_impedenceConnStatusValue = new QLabel(groupBox_tabmain_1);
+    label_tabmain_impedenceConnStatusValue->setObjectName(QString::fromUtf8("label_tabmain_impedenceConnStatusValue"));
+    label_tabmain_impedenceConnStatusValue->setMaximumSize(QSize(150, 50));
+    label_tabmain_impedenceConnStatusValue->setPixmap(fitpixmap_redLight);
 
-    gLayout_tabmain_1->addWidget(label_14, 1, 6, 1, 1);
+    gLayout_tabmain_1->addWidget(label_tabmain_impedenceConnStatusValue, 1, 6, 1, 1);
 
-    label_15 = new QLabel(groupBox_tabmain_1);
-    label_15->setObjectName(QString::fromUtf8("label_15"));
-    label_15->setMaximumSize(QSize(150, 50));
-    label_15->setLayoutDirection(Qt::RightToLeft);
+    label_tabmain_rbBusyStatus = new QLabel(groupBox_tabmain_1);
+    label_tabmain_rbBusyStatus->setObjectName(QString::fromUtf8("label_tabmain_rbBusyStatus"));
+    label_tabmain_rbBusyStatus->setMaximumSize(QSize(150, 50));
+    label_tabmain_rbBusyStatus->setLayoutDirection(Qt::RightToLeft);
 
-    gLayout_tabmain_1->addWidget(label_15, 1, 7, 1, 1);
+    gLayout_tabmain_1->addWidget(label_tabmain_rbBusyStatus, 1, 7, 1, 1);
 
-    label_16 = new QLabel(groupBox_tabmain_1);
-    label_16->setObjectName(QString::fromUtf8("label_16"));
-    label_16->setMaximumSize(QSize(150, 50));
-    label_16->setPixmap(fitpixmap_redLight);
+    label_tabmain_rbBusyStatusValue = new QLabel(groupBox_tabmain_1);
+    label_tabmain_rbBusyStatusValue->setObjectName(QString::fromUtf8("label_tabmain_rbBusyStatusValue"));
+    label_tabmain_rbBusyStatusValue->setMaximumSize(QSize(150, 50));
+    label_tabmain_rbBusyStatusValue->setPixmap(fitpixmap_redLight);
 
-    gLayout_tabmain_1->addWidget(label_16, 1, 8, 1, 1);
+    gLayout_tabmain_1->addWidget(label_tabmain_rbBusyStatusValue, 1, 8, 1, 1);
 
 
     horizontalLayout_5->addLayout(gLayout_tabmain_1);
@@ -815,14 +815,14 @@ void BaseWindow::retranslateUi(QMainWindow *MainWindow) {
     label_tabmain_rbConnStatusValue->setText(QString());
     label_tabmain_rbErrStatusValue->setText(QString());
     label_tabmain_rbErrStatus->setText(QApplication::translate("MainWindow", "\346\234\272\345\231\250\344\272\272\346\225\205\351\232\234\347\212\266\346\200\201", nullptr));
-    label_tabmain_5fConnStatus->setText(QApplication::translate("MainWindow", "\344\272\224\346\214\207\345\244\271\347\210\252\350\277\236\346\216\245\347\212\266\346\200\201", nullptr));
+    label_tabmain_5fConnStatus->setText(QApplication::translate("MainWindow", "五指爪连接状态", nullptr));
     label_tabmain_5fConnStatusValue->setText(QString());
-    label_tabmain_TsensorStatus->setText(QApplication::translate("MainWindow", "\345\205\255\350\275\264\344\274\240\346\204\237\345\231\250\350\277\236\346\216\245\347\212\266\346\200\201", nullptr));
+    label_tabmain_TsensorStatus->setText(QApplication::translate("MainWindow", "传感器连接状态", nullptr));
     label_tabmain_TsensorStatusValue->setText(QString());
-    label_13->setText(QApplication::translate("MainWindow", "TextLabel", nullptr));
-    label_14->setText(QString());
-    label_15->setText(QApplication::translate("MainWindow", "TextLabel", nullptr));
-    label_16->setText(QString());
+    label_tabmain_impedenceConnStatus->setText(QApplication::translate("MainWindow", "\351\230\273\346\212\227\350\277\236\346\216\245\347\212\266\346\200\201", nullptr));
+    label_tabmain_impedenceConnStatusValue->setText(QString());
+    label_tabmain_rbBusyStatus->setText(QApplication::translate("MainWindow", "机器人繁忙状态", nullptr));
+    label_tabmain_rbBusyStatusValue->setText(QString());
     groupBox_tabmain_2->setTitle(QApplication::translate("MainWindow", "\346\250\241\345\274\217\351\200\211\346\213\251", nullptr));
     cbox_tabmain_chooseMode->setItemText(0, QApplication::translate("MainWindow", "\350\257\267\351\200\211\346\213\251\350\277\220\350\241\214\346\250\241\345\274\217", nullptr));
     cbox_tabmain_chooseMode->setItemText(1, QApplication::translate("MainWindow", "\347\234\237\346\234\272\350\277\220\350\241\214", nullptr));

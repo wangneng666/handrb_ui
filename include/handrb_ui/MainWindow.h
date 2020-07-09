@@ -24,6 +24,8 @@
 #include "industrial_msgs/RobotStatus.h"
 #include "geometry_msgs/Wrench.h"
 #include "hsr_rosi_device/setModeSrv.h"
+#include "hirop_msgs/robotError.h"
+
 //标准库
 #include "ros/ros.h"
 #include <iostream>
@@ -97,6 +99,7 @@ private:
     ros::ServiceClient handClaw_grabDoll_client;
     ros::ServiceClient rob_goHome_client;
     ros::ServiceClient RobSetMode_client;
+    ros::ServiceClient robGetStatus_client;
     ros::Subscriber voiceSolveRes_subcriber;
     ros::Subscriber personDetectRes_subcriber;
     ros::Subscriber grabDollImagRes_subcriber;
@@ -109,6 +112,7 @@ private:
     ros::Publisher rbGoHome_publisher;
     ros::Publisher flag_forceSensor_publisher;
     ros::Publisher impedenceLive_publisher;
+    ros::Publisher shakehandOver_publisher;
     //线程句柄
     vector<rbQthread*> rbQthreadList;
     rbQthread* rbQthread_devConnOrRviz;
@@ -120,6 +124,7 @@ private:
     rbQthread* rbQthread_shakehand;
     rbQthread* rbQthread_grepwawa;
     rbQthread* rbQthread_handClaw_gesture;
+    rbQthread* rbQthread_lisionRbErrInfo;
 
     rbQthread* rbQthread_rbRunMoudlePrepare ;
     rbQthread* rbQthread_rbCtlMoudlePrepare ;
@@ -156,6 +161,7 @@ private:
     void slot_btn_tabShakeHand_begin();
     void slot_btn_tabShakeHand_stop();
     void slot_btn_tabShakeHand_close();
+    void slot_btn_tabShakeHand_shakeHandEnd();
     //抓娃娃界面槽函数
     void slot_btn_tabgrabToy_startRobRun();
     void slot_btn_tabgrabToy_startRobCtl();
@@ -193,6 +199,7 @@ private:
     void thread_rbQthread_rbCtlMoudlePrepare();
     void thread_rbQthread_rbImpMoudlePrepare();
     void thread_rbQthread_rbVoiceMoudlePrepare();
+    void thread_rbQthread_LisionRbErrInfo();
     //其他函数
     QImage cvMat2QImage(const cv::Mat& mat);
     bool sendSignal_RbPreparePose();//发动机器人准备握手动作信号

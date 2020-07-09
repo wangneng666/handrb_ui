@@ -48,7 +48,6 @@ void MainWindow::SysVarInit() {
     rbQthread_beginRun = new rbQthread();
     rbQthread_beginRun->setParm(this,&MainWindow::thread_rbQthread_beginRun);
 
-
     rbQthread_sysReset = new rbQthread();
     rbQthread_sysReset->setParm(this,&MainWindow::thread_rbQthread_sysReset);
 
@@ -58,8 +57,11 @@ void MainWindow::SysVarInit() {
     rbQthread_voicedeteck = new rbQthread();
     rbQthread_voicedeteck->setParm(this,&MainWindow::thread_rbQthread_voicedeteck);
 
-
     rbQthread_handClaw_gesture = new rbQthread();
+
+    //监听故障子线程
+    rbQthread_lisionRbErrInfo= new rbQthread();
+    rbQthread_lisionRbErrInfo->setParm(this,&MainWindow::thread_rbQthread_LisionRbErrInfo);
     /********************************************************************************************/
     rbQthread_rbRunMoudlePrepare = new rbQthread();
     rbQthread_rbCtlMoudlePrepare = new rbQthread();
@@ -91,6 +93,7 @@ void MainWindow::SysVarInit() {
 void MainWindow::initRosToptic(){
     //话题
     flag_forceSensor_publisher=Node->advertise<std_msgs::Bool>("forceSensor_moveFlag",1);
+    shakehandOver_publisher=Node->advertise<std_msgs::Bool>("shake_over",1);
     impedenceLive_publisher=Node->advertise<std_msgs::Bool>("uipub_impedenceLive",1);
     rbGoHome_publisher=Node->advertise<std_msgs::Int8>("homePoint",1);
     visionDetech_publisher=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
@@ -112,6 +115,7 @@ void MainWindow::initRosToptic(){
     handClaw_grabDoll_client = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("handClaw_grabDoll");
     rob_goHome_client = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("rob_goHome");
     RobSetMode_client = Node->serviceClient<hsr_rosi_device::setModeSrv>("/set_mode_srv");
+    robGetStatus_client = Node->serviceClient<hirop_msgs::robotError>("getRobotErrorFaultMsg");
 
 }
 
@@ -136,6 +140,7 @@ void MainWindow::signalAndSlot() {
     connect(btn_tabShakeHand_startimpedence,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_startimpedence);
     connect(btn_tabShakeHand_startvoice,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_startvoice);
     connect(btn_tabShakeHand_begin,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_begin);
+    connect(btn_tabShakeHand_shakeHandEnd,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_shakeHandEnd);
     connect(btn_tabShakeHand_stop,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_stop);
     connect(btn_tabShakeHand_close,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_close);
     connect(cBox_tabShakeHand_setMode,SIGNAL(currentIndexChanged(int)), this, SLOT(slot_cBox_tabShakeHand_setMode(int )));
@@ -248,6 +253,12 @@ void MainWindow::slot_timer_listen_status() {
         impedenceLive_publisher.publish(msg_imp);
         flag_impedenceLive= false;
     }
+    if(RobConn_Detector.status)
+    {
+        if(!rbQthread_lisionRbErrInfo->isRunning()){
+            rbQthread_lisionRbErrInfo->start();
+        }
+    }
 }
 
 //开始运行
@@ -272,46 +283,52 @@ void MainWindow::slot_btn_tabmain_sysStop() {
 }
 //系统复位 goto 等5s定时重启
 void MainWindow::slot_btn_tabmain_sysReset() {
-    if (rbQthread_sysReset->isRunning()) {
+    if(rbQthread_sysReset->isRunning()){
         emit emitQmessageBox(infoLevel::warning, QString("程序正在执行中,请不要重复启动!"));
-    } else
-    {
-        //掉机器人使能
-        hsr_rosi_device::SetEnableSrv srv;
-        srv.request.enable= false;
-        RobEnable_client.call(srv);
-        //释放线程资源
-        // for(auto thread:rbQthreadList){
-        //     if(thread->isRunning()){
-        //         thread->terminate();
-        //         thread->wait(1000*1);
-        //         cout<<"释放线程资源"<<endl;
-        //     }
-        // }
-
-        //启动复位线程,此线程可重复使用
-//        rbQthread_sysReset->start();
-        //开辟临时线程
-        rbQthread* tmp_thread=new rbQthread();
-        tmp_thread->setParm4([&]
-        {
-         flag_havedReset= true;
-         ob_node.shutdownNode();
-         system("rosnode kill -a");
-         sleep(1);
-         system("killall rosmaster");
-         sleep(1);
-         system("roscore");
-        }
-        );
-        //5s后复位按钮才能再次使用
-        connect(tmp_thread,SIGNAL(started()),this,SLOT(slot_rbQthread_listenSysResetStart()));
-        connect(tmp_thread,SIGNAL(finished()),tmp_thread,SLOT(deleteLater()));
-        connect(tmp_thread,SIGNAL(finished()),this,SLOT(slot_rbQthread_listenFinish()));
-        tmp_thread->start();
-        LOG("RUNINFO")->logInfoMessage("系统复位");
-
+    } else{
+        rbQthread_sysReset->start();
     }
+
+//    if (rbQthread_sysReset->isRunning()) {
+//        emit emitQmessageBox(infoLevel::warning, QString("程序正在执行中,请不要重复启动!"));
+//    } else
+//    {
+//        //掉机器人使能``
+//        hsr_rosi_device::SetEnableSrv srv;
+//        srv.request.enable= false;
+//        RobEnable_client.call(srv);
+//        //释放线程资源
+//        // for(auto thread:rbQthreadList){
+//        //     if(thread->isRunning()){
+//        //         thread->terminate();
+//        //         thread->wait(1000*1);
+//        //         cout<<"释放线程资源"<<endl;
+//        //     }
+//        // }
+//
+//        //启动复位线程,此线程可重复使用
+////        rbQthread_sysReset->start();
+//        //开辟临时线程
+//        rbQthread* tmp_thread=new rbQthread();
+//        tmp_thread->setParm4([&]
+//        {
+//         flag_havedReset= true;
+//         ob_node.shutdownNode();
+//         system("rosnode kill -a");
+//         sleep(1);
+//         system("killall rosmaster");
+//         sleep(1);
+//         system("roscore");
+//        }
+//        );
+//        //5s后复位按钮才能再次使用
+//        connect(tmp_thread,SIGNAL(started()),this,SLOT(slot_rbQthread_listenSysResetStart()));
+//        connect(tmp_thread,SIGNAL(finished()),tmp_thread,SLOT(deleteLater()));
+//        connect(tmp_thread,SIGNAL(finished()),this,SLOT(slot_rbQthread_listenFinish()));
+//        tmp_thread->start();
+//        LOG("RUNINFO")->logInfoMessage("系统复位");
+//
+//    }
 }
 
 
@@ -350,6 +367,7 @@ void MainWindow::thread_rbQthread_sysStop() {
 }
 //系统复位子线程
 void MainWindow::thread_rbQthread_sysReset() {
+    system("rosnode kill -a");
 //    flag_havedReset= true;
 //    ob_node.shutdownNode();
 //    system("rosnode kill -a");
@@ -943,12 +961,37 @@ bool MainWindow::sendSignal_RbGrabtoy() {
     return true;
 }
 
+void MainWindow::thread_rbQthread_LisionRbErrInfo() {
+    hirop_msgs::robotError srv;
+    robGetStatus_client.call(srv);
+    uint64_t level=srv.response.errorLevel;
+    int errorLevel=level;
+    string errorMsg=srv.response.errorMsg;
+    string isError=srv.response.isError?"true":"false";
+    string dealMsg=srv.response.dealMsg;
+    QString tmp=QString("errorLevel:%1\nerrorMsg:%2\nisError:%3\ndealMsg:%4").arg(errorLevel).arg(QString().fromStdString(errorMsg)).arg(QString().fromStdString(isError)).arg(QString().fromStdString(dealMsg));
+    if(srv.response.isError){
+        emit emitQmessageBox(infoLevel::information,tmp);
+    }
+}
+
+void MainWindow::slot_btn_tabShakeHand_shakeHandEnd() {
+    if(rbQthread_rbImpMoudlePrepare->isRunning()){
+        system("rosservice call /stop_motion");
+        sleep(2);
+    }
+    std_msgs::Bool msg;
+    msg.data=true;
+    shakehandOver_publisher.publish(msg);
+}
+
 //重启UI节点
 void observer_rebootUiNode::rebootUiNode(){
     sp=new ros::AsyncSpinner(1);
     sp->start();
     ros::start();
     mainwindow->initRosToptic();
+
 }
 //
 //rosservice call /clear_robot_fault "{}"

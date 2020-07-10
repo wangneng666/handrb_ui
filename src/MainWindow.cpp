@@ -1089,6 +1089,8 @@ void MainWindow::callback_rbCtlBusy_status_subscriber(std_msgs::Bool msg) {
 }
 
 bool MainWindow::sendSignal_RbPreparePose() {
+    //启动startmove
+    system("rostopic pub /start_move std_msgs/Bool \"data: true\"");
     if(!RobEnable_Detector.status){
         emit emitQmessageBox(infoLevel::warning, "机器人未上使能!");
         return false;

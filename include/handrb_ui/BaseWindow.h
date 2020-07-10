@@ -131,6 +131,7 @@ public:
     QGroupBox *groupBox_tabdebug_3;
     QHBoxLayout *horizontalLayout_20;
     QPushButton *btn_rbGoHomePose;
+    QPushButton *btn_startSensor;
     //握手界面
     QWidget *tab_shakeHand;
     QVBoxLayout *verticalLayout_6;

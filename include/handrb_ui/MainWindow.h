@@ -166,6 +166,7 @@ private:
     void slot_btn_gripper_OK_Pose();//五指夹爪OK手势
     void slot_btn_gripper_Y_Pose();//五指夹爪Y手势
     void slot_btn_rbGoHomePose();//机器人回原点
+    void slot_btn_startSensor();//开启六轴传感器
     //握手界面槽函数
     void slot_btn_tabShakeHand_startRobRun();
     void slot_btn_tabShakeHand_startRobCtl();

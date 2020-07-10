@@ -388,8 +388,14 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     btn_rbGoHomePose->setObjectName(QString::fromUtf8("btn_rbGoHomePose"));
     btn_rbGoHomePose->setMaximumSize(QSize(150, 50));
     btn_rbGoHomePose->setFixedSize(BTN_W,BTN_H);
-
     horizontalLayout_20->addWidget(btn_rbGoHomePose);
+
+    btn_startSensor = new QPushButton(groupBox_tabdebug_3);
+    btn_startSensor->setObjectName(QString::fromUtf8("btn_startSensor"));
+    btn_startSensor->setMaximumSize(QSize(150, 50));
+    btn_startSensor->setFixedSize(BTN_W,BTN_H);
+    btn_startSensor->setText("开启传感器");
+    horizontalLayout_20->addWidget(btn_startSensor);
 
 
     verticalLayout_5->addWidget(groupBox_tabdebug_3);

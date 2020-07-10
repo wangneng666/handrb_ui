@@ -144,11 +144,13 @@ void MainWindow::signalAndSlot() {
     connect(btn_gripper_OK_Pose,&QPushButton::clicked,this,&MainWindow::slot_btn_gripper_OK_Pose);
     connect(btn_gripper_Y_Pose,&QPushButton::clicked,this,&MainWindow::slot_btn_gripper_Y_Pose);
     connect(btn_rbGoHomePose,&QPushButton::clicked,this,&MainWindow::slot_btn_rbGoHomePose);
+    connect(btn_startSensor,&QPushButton::clicked,this,&MainWindow::slot_btn_startSensor);
     //握手界面
     connect(btn_tabShakeHand_startRobRun,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_startRobRun);
     connect(btn_tabShakeHand_startRobCtl,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_startRobCtl);
     connect(btn_tabShakeHand_startimpedence,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_startimpedence);
     connect(btn_tabShakeHand_startvoice,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_startvoice);
+
     connect(btn_tabShakeHand_begin,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_begin);
     connect(btn_tabShakeHand_shakeHandEnd,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_shakeHandEnd);
     connect(btn_tabShakeHand_stop,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_stop);
@@ -333,6 +335,7 @@ void MainWindow::slot_btn_tabmain_beginRun() {
 
 //系统停止
 void MainWindow::slot_btn_tabmain_sysStop() {
+    Timer_forAutoRunShakeHand->stop();
     if(rbQthread_sysStop->isRunning()){
         emit emitQmessageBox(infoLevel::warning,QString("请不要重复进行系统停止!"));
     } else{
@@ -342,11 +345,29 @@ void MainWindow::slot_btn_tabmain_sysStop() {
 }
 //系统复位 goto 等5s定时重启
 void MainWindow::slot_btn_tabmain_sysReset() {
-    if(rbQthread_sysReset->isRunning()){
-        emit emitQmessageBox(infoLevel::warning, QString("程序正在执行中,请不要重复启动!"));
-    } else{
-        rbQthread_sysReset->start();
-    }
+//    Timer_forAutoRunShakeHand->stop();
+//    if(rbQthread_sysReset->isRunning()){
+//        emit emitQmessageBox(infoLevel::warning, QString("程序正在执行中,请不要重复启动!"));
+//    } else{
+//        rbQthread_sysReset->start();
+//    }
+
+            //开辟临时线程
+        rbQthread* tmp_thread=new rbQthread();
+        tmp_thread->setParm4([&]
+        {
+        Timer_forAutoRunShakeHand->stop();
+         flag_havedReset= true;
+        system("rosnode kill $(rosnode list |grep -v handrb_ui)");
+        }
+        );
+        //5s后复位按钮才能再次使用
+        connect(tmp_thread,SIGNAL(started()),this,SLOT(slot_rbQthread_listenSysResetStart()));
+        connect(tmp_thread,SIGNAL(finished()),tmp_thread,SLOT(deleteLater()));
+        connect(tmp_thread,SIGNAL(finished()),this,SLOT(slot_rbQthread_listenFinish()));
+        tmp_thread->start();
+        LOG("RUNINFO")->logInfoMessage("系统复位");
+
 
 //    if (rbQthread_sysReset->isRunning()) {
 //        emit emitQmessageBox(infoLevel::warning, QString("程序正在执行中,请不要重复启动!"));
@@ -898,6 +919,7 @@ void MainWindow::thread_rbQthread_voicedeteck() {
 }
 
 void MainWindow::slot_btn_tabShakeHand_startRobRun() {
+    cout<<"上使能"<<endl;
     if (rbQthread_rbRunMoudlePrepare->isRunning()) {
         emit emitQmessageBox(infoLevel::warning, "机器人系统程序正在执行中,请不要重复启动!");
     } else {
@@ -944,13 +966,14 @@ void MainWindow::slot_btn_tabShakeHand_stop() {
     } else {
         rbQthread_sysStop->start();
     }
+    Timer_forAutoRunShakeHand->stop();
 }
 
 void MainWindow::slot_btn_tabShakeHand_close() {
+    Timer_forAutoRunShakeHand->stop();
     if(rbQthread_rbImpMoudlePrepare->isRunning()){
         system((char*)"rosservice call /stop_motion");
         system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
-
     }
     hsr_rosi_device::setModeSrv srv;
     srv.request.mode=0;
@@ -962,9 +985,7 @@ void MainWindow::slot_btn_tabShakeHand_close() {
     {
         emit emitQmessageBox(infoLevel::warning, "模式设置服务连接失败!");
     }
-    
 }
-
 
 
 void MainWindow::slot_btn_tabgrabToy_startRobRun() {
@@ -1258,7 +1279,7 @@ void MainWindow::slot_timer_AutoRun_shakeHand() {
 
 //按钮启动定时器
 void MainWindow::slot_btn_tabShakeHand_AutoRun() {
-    if(Timer_forAutoRunShakeHand->isActive()){
+    if(!Timer_forAutoRunShakeHand->isActive()){
         Timer_forAutoRunShakeHand->start();
     }
 }
@@ -1267,6 +1288,9 @@ void MainWindow::callback_isOpenFollow_subscriber(std_msgs::Bool msg) {
         flag_robPreparePose=msg.data;
 }
 
+void MainWindow::slot_btn_startSensor() {
+    system("rosrun gripper_bridge opensensor.sh  &");
+}
 
 //重启UI节点
 void observer_rebootUiNode::rebootUiNode(){

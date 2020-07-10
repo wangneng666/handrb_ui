@@ -15,6 +15,7 @@
 #include "std_msgs/String.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/Int8.h"
+#include "std_msgs/Int16.h"
 #include "rb_msgAndSrv/rb_DoubleBool.h"
 #include "rb_msgAndSrv/rb_string.h"
 #include "sensor_msgs/Image.h"
@@ -71,6 +72,7 @@ private:
     //全局变量
     QMutex mutex_devDetector;
     bool flag_switchPersonDecBtnText= false;
+    bool flag_switchVoiceBtnText= false;
     bool flag_havedReset= false;
     bool flag_rbEnable= false;
     bool flag_impedenceLive= false;//阻抗随动状态
@@ -111,6 +113,7 @@ private:
     ros::Subscriber forceSensor_subscriber;
     ros::Subscriber impedenceLive_subscriber;
     ros::Subscriber rbCtlBusy_subscriber;
+    ros::Publisher voice_order_publisher;
     ros::Publisher visionDetech_publisher;
     ros::Publisher rbGoHome_publisher;
     ros::Publisher flag_forceSensor_publisher;
@@ -173,12 +176,16 @@ private:
     void slot_btn_tabgrabToy_run();
     void slot_btn_tabgrabToy_stop();
     void slot_btn_tabgrabToy_close();
+    //语音控制页面
+    void slot_btn_tab_voiceDetect_run();
+    //行人检测功能函数
+    void slot_btn_tab_personDetect_openPersonDetect();
     //日志界面槽函数
     void slot_btn_tabrecord_outRecord();//导出日志
     void slot_btn_tabrecord_clearRecord();//清除日志
 //*********************************************************************************
     //ros节点回调函数
-    void callback_voiceSolveRes_subcriber(std_msgs::String msg);
+    void callback_voiceSolveRes_subcriber(const std_msgs::Int16::ConstPtr& msg);
     void callback_personDetectRes_subcriber(const sensor_msgs::Image::ConstPtr& msg);
     void callback_grabDollImagRes_subcriber(const sensor_msgs::Image::ConstPtr& msg);
     void callback_robStatus_subscriber(const industrial_msgs::RobotStatus::ConstPtr robot_status);
@@ -208,7 +215,9 @@ private:
     QImage cvMat2QImage(const cv::Mat& mat);
     bool sendSignal_RbPreparePose();//发动机器人准备握手动作信号
     bool sendSignal_RbGrabtoy();//发动机器人抓娃娃信号
-
+    void sayHi_awakeVoice();
+    void AutoRun_shakeHand();//握手一键执行
+    void AutoRun_GrabToy();//抓娃娃一键执行
 signals:
     void emitTextControl(QString text) const;
     void emitQmessageBox(infoLevel level,QString info);

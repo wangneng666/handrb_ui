@@ -70,6 +70,8 @@ public:
     QString logPath;
     QPixmap fitpixmap_redLight ;
     QPixmap fitpixmap_greenLight;
+    QPixmap pixmap_voiceAwake;
+    QPixmap pixmap_voicesleep;
 public:
     QWidget *centralWidget;
     QVBoxLayout *verticalLayout_3;
@@ -164,7 +166,7 @@ public:
     QVBoxLayout *vLayout_tab_grabToy_1;
     QGroupBox *groupBox;
     QVBoxLayout *verticalLayout_8;
-    QLabel *label;
+    QLabel *lable_tabgrabToy_showImg;
     QVBoxLayout *vLayout_tab_grabToy_2;
     QGroupBox *gBox_tab_grabToy_1;
     QHBoxLayout *horizontalLayout_17;
@@ -184,14 +186,38 @@ public:
     QGroupBox *gBox_tab_grabToy_3;
     QHBoxLayout *horizontalLayout_16;
     QHBoxLayout *hLayout_tab_grabToy_3;
+    QPushButton *btn_tab_grabToy_detect;
     QPushButton *btn_tab_grabToy_run;
-    QPushButton *btn_tab_grabToy_stop;
     QPushButton *btn_tab_grabToy_close;
     //行人检测界面
     QWidget *tab_personDetect;
+    QHBoxLayout *horizontalLayout_12;
+    QHBoxLayout *hLayout_tab_personDetect_1;
+    QVBoxLayout *vLayout_tab_personDetect_1;
+    QGroupBox *gBox_tab_personDetect_1;
+    QHBoxLayout *horizontalLayout_15;
+    QLabel *label_tab_personDetect_showImag;
+    QVBoxLayout *vLayout_tab_personDetect_2;
+    QGroupBox *gBox_tab_personDetect_2;
+    QVBoxLayout *verticalLayout_11;
+    QHBoxLayout *hLayout_tab_personDetect_21;
+    QPushButton *btn_tab_personDetect_openPersonDetect;
     //声音检测界面
     QWidget *tab_voiceDetect;
-
+    QHBoxLayout *horizontalLayout_10;
+    QHBoxLayout *hLayout_tab_voiceDetect;
+    QVBoxLayout *vLayout_tab_voiceDetect_2;
+    QGroupBox *gBox_tab_voiceDetect_voiceCtl;
+    QVBoxLayout *verticalLayout_9;
+    QHBoxLayout *hLayout_tab_voiceDetect_ctl1;
+    QLabel *lable_tab_voiceDetect_showImg;
+    QHBoxLayout *hLayout_tab_voiceDetect_ctl2;
+    QPushButton *btn_tab_voiceDetect_run;
+    QVBoxLayout *vLayout_tab_voiceDetect_1;
+    QGroupBox *gBox_tab_voiceDetect_voiceInfo;
+    QHBoxLayout *horizontalLayout_11;
+    QPlainTextEdit *plainTextEdit;
+    //日志界面
     QWidget *tab_record;
     QHBoxLayout *horizontalLayout;
     QHBoxLayout *hLayout_tabrecord_1;

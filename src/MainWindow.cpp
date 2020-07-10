@@ -102,9 +102,12 @@ void MainWindow::initRosToptic(){
     rbCtlBusy_subscriber=Node->subscribe<std_msgs::Bool>("rbCtlBusy_status",1,&MainWindow::callback_rbCtlBusy_status_subscriber, this);
 //    camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
     forceSensor_subscriber=Node->subscribe<geometry_msgs::Wrench>("daq_data", 1000, &MainWindow::callback_forceSensor_subscriber, this);
-//    voiceSolveRes_subcriber=Node->subscribe<std_msgs::String>("voiceSolve_res",1,&MainWindow::callback_voiceSolveRes_subcriber, this);
-//    personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
-//    grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
+
+    voiceSolveRes_subcriber=Node->subscribe<std_msgs::Int16>("voice_order",1,&MainWindow::callback_voiceSolveRes_subcriber, this);
+    voice_order_publisher = Node->advertise<std_msgs::String>("voiceSolve_res", 1);
+
+    personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
+    grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
     robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
     impedenceLive_subscriber=Node->subscribe<std_msgs::Bool>("impedence_live",1,&MainWindow::callback_impedenceLive_subscriber,this);
 
@@ -151,8 +154,13 @@ void MainWindow::signalAndSlot() {
     connect(btn_tabgrabToy_startRobCtl,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_startRobCtl);
     connect(btn_tabgrabToy_startvoice,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_startvoice);
     connect(btn_tab_grabToy_run,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_run);
-    connect(btn_tab_grabToy_stop,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_stop);
+//    connect(btn_tab_grabToy_run,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_stop);
     connect(btn_tab_grabToy_close,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_close);
+    //行人检测
+    connect(btn_tab_personDetect_openPersonDetect,&QPushButton::clicked,this,&MainWindow::slot_btn_tab_personDetect_openPersonDetect);
+
+    //语音控制页面
+    connect(btn_tab_voiceDetect_run,&QPushButton::clicked,this,&MainWindow::slot_btn_tab_voiceDetect_run);
 
     //日志界面
     connect(btn_tabrecord_outRecord,&QPushButton::clicked,this,&MainWindow::slot_btn_tabrecord_outRecord);
@@ -236,8 +244,6 @@ void MainWindow::slot_timer_listen_status() {
             mutex_devDetector.unlock();
     }
 
-
-
     //机器人故障时下使能
     if(!Holdflag_RobDownEnable){
         hsr_rosi_device::SetEnableSrv srv2_setE;
@@ -250,7 +256,6 @@ void MainWindow::slot_timer_listen_status() {
         }
     }
 
-
     //机器人状态发布
     hsr_rosi_device::setModeSrv srv;
     if(rbQthread_rbImpMoudlePrepare->isRunning())
@@ -259,28 +264,20 @@ void MainWindow::slot_timer_listen_status() {
         {
             system("rosservice call /stop_motion");
             srv.request.mode=0;
-            if(RobSetMode_client.call(srv)){
-                if(srv.response.finsh)
-                {
-                    emit emitQmessageBox(infoLevel::warning, "模式设置为点动模式!");
-                }
-            }else
-            {
-                emit emitQmessageBox(infoLevel::warning, "模式设置服务连接失败!");
-            }
-        }
-    }
-    else
-    {
-        if(!Holdflag_RobSetMode)
-        {
-            system("rosservice call /stop_motion");
-            srv.request.mode=0;
             RobSetMode_client.call(srv);
-            Holdflag_RobSetMode=true;
         }
     }
-
+//    else
+//    {
+//        if(!Holdflag_RobSetMode)
+//        {
+//            cout<<"调用了"<<endl;
+//            system("rosservice call /stop_motion");
+//            srv.request.mode=0;
+//            RobSetMode_client.call(srv);
+//            Holdflag_RobSetMode=true;
+//        }
+//    }
 
     std_msgs::Bool rb_msg;
     if(RobErr_Detector.status){
@@ -413,6 +410,7 @@ void MainWindow::thread_rbQthread_beginRun() {
 void MainWindow::thread_rbQthread_sysStop() {
     system("rosservice call /stop_motion");
     system("rostopic pub -1 /stop_move std_msgs/Bool \"data: true\"");
+
     // hsr_rosi_device::SetEnableSrv srv;
     // srv.request.enable= false;
     // if(RobEnable_client.call(srv)){
@@ -422,7 +420,7 @@ void MainWindow::thread_rbQthread_sysStop() {
 }
 //系统复位子线程
 void MainWindow::thread_rbQthread_sysReset() {
-    system("rosnode kill -a");
+    system("rosnode kill $(rosnode list |grep -v handrb_ui)");
 //    flag_havedReset= true;
 //    ob_node.shutdownNode();
 //    system("rosnode kill -a");
@@ -559,34 +557,127 @@ void MainWindow::slot_combox_chooseMode_Clicked(int index) {
 }
 
 
-
-//void MainWindow::callback_voiceSolveRes_subcriber(std_msgs::String msg) {
+void MainWindow::callback_voiceSolveRes_subcriber(const std_msgs::Int16::ConstPtr& msg) {
 //    label_tabfunc_voiceValue->setText(QString("当前语音识别结果:")+QString::fromStdString(msg.data));
-//}
+    int voice_order = msg->data;
+    string voice_feedback;
+    std_msgs::String se_msg;
+
+    //收到上使能语音指令
+    if (voice_order == 0)
+    {
+        if (RobConn_Detector.status == true)
+        {
+            //调用上使能按钮
+            voice_feedback = "机器人上使能成功";
+            se_msg.data = voice_feedback.c_str();
+            voice_order_publisher.publish(se_msg);
+        }
+        else
+        {
+            voice_feedback = "机器人上使能失败，请重启设备连接";
+            se_msg.data = voice_feedback.c_str();
+            voice_order_publisher.publish(se_msg);
+        }
+
+    }
+
+    //收到下使能语音指令
+    if (voice_order == 1)
+    {
+        if (RobConn_Detector.status == true)
+        {
+            //调用下使能按钮
+            voice_feedback = "机器人下使能成功";
+            se_msg.data = voice_feedback.c_str();
+            voice_order_publisher.publish(se_msg);
+        }
+        else
+        {
+            voice_feedback = "机器人下使能失败，请重启设备连接";
+            se_msg.data = voice_feedback.c_str();
+            voice_order_publisher.publish(se_msg);
+        }
+    }
+
+    //收到握手语音指令
+    if (voice_order == 2)
+    {
+        if ((flag_rbEnable&&flag_rbCtlStartUp)== true)
+        {
+            //调用握手按钮
+            voice_feedback = "再见，祝你生活愉快";
+            se_msg.data = voice_feedback.c_str();
+            voice_order_publisher.publish(se_msg);
+        }
+        else
+        {
+            voice_feedback = "抱歉，机器人此时无法进行握手操作";
+            se_msg.data = voice_feedback.c_str();
+            voice_order_publisher.publish(se_msg);
+        }
+    }
+
+    //收到抓娃娃语音指令
+    if (voice_order == 3)
+    {
+        if ((flag_rbEnable&&flag_rbCtlStartUp) == true)
+        {
+            //调用握手按钮
+            voice_feedback = "给，你要的娃娃，祝你生活愉快";
+            se_msg.data = voice_feedback.c_str();
+            voice_order_publisher.publish(se_msg);
+        }
+        else
+        {
+            voice_feedback = "抱歉，机器人此时无法进行抓娃娃操作";
+            se_msg.data = voice_feedback.c_str();
+            voice_order_publisher.publish(se_msg);
+        }
+    }
+
+    //收到回原点语音指令
+    if (voice_order == 6)
+    {
+        if ((flag_rbEnable&&flag_rbCtlStartUp) == true)
+        {
+            //调用回原点按钮
+            voice_feedback = "机器人已回原点";
+            se_msg.data = voice_feedback.c_str();
+            voice_order_publisher.publish(se_msg);
+        }
+        else
+        {
+            voice_feedback = "抱歉，机器人状态出现故障";
+            se_msg.data = voice_feedback.c_str();
+            voice_order_publisher.publish(se_msg);
+        }
+    }
+}
 //
-//void MainWindow::callback_personDetectRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
-//    //如果标志为关闭行人检测
-//    if(!flag_switchPersonDecBtnText){
-//        return;
-//    }
-//    const cv_bridge::CvImageConstPtr &ptr = cv_bridge::toCvShare(msg, "bgr8");
-//    cv::Mat mat = ptr->image;
-//    QImage qimage = cvMat2QImage(mat);
-//    QPixmap tmp_pixmap = QPixmap::fromImage(qimage);
-//    QPixmap new_pixmap = tmp_pixmap.scaled(label_tabfunc_image->width(), label_tabfunc_image->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
-////    QPixmap tmp_pixmap = pixmap1.scaled(label_picture1->width(), label_picture1->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 按比例缩放
-//    label_tabfunc_image->setPixmap(new_pixmap);
-//}
+void MainWindow::callback_personDetectRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
+    //如果标志为关闭行人检测
+    if(!flag_switchPersonDecBtnText){
+        return;
+    }
+    const cv_bridge::CvImageConstPtr &ptr = cv_bridge::toCvShare(msg, "bgr8");
+    cv::Mat mat = ptr->image;
+    QImage qimage = cvMat2QImage(mat);
+    QPixmap tmp_pixmap = QPixmap::fromImage(qimage);
+    QPixmap new_pixmap = tmp_pixmap.scaled(label_tab_personDetect_showImag->width(), label_tab_personDetect_showImag->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
+//    QPixmap tmp_pixmap = pixmap1.scaled(label_picture1->width(), label_picture1->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 按比例缩放
+    label_tab_personDetect_showImag->setPixmap(new_pixmap);
+}
 //
-//void MainWindow::callback_grabDollImagRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
-//    const cv_bridge::CvImageConstPtr &ptr = cv_bridge::toCvShare(msg, "bgr8");
-//    cv::Mat mat = ptr->image;
-//    QImage qimage = cvMat2QImage(mat);
-//    QPixmap tmp_pixmap = QPixmap::fromImage(qimage);
-//    QPixmap new_pixmap = tmp_pixmap.scaled(label_tabfunc_image->width(), label_tabfunc_image->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
-////    QPixmap tmp_pixmap = pixmap1.scaled(label_picture1->width(), label_picture1->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 按比例缩放
-//    label_tabfunc_image->setPixmap(new_pixmap);
-//}
+void MainWindow::callback_grabDollImagRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
+    const cv_bridge::CvImageConstPtr &ptr = cv_bridge::toCvShare(msg, "bgr8");
+    cv::Mat mat = ptr->image;
+    QImage qimage = cvMat2QImage(mat);
+    QPixmap tmp_pixmap = QPixmap::fromImage(qimage);
+    QPixmap new_pixmap = tmp_pixmap.scaled(lable_tabgrabToy_showImg->width(), lable_tabgrabToy_showImg->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
+//    QPixmap tmp_pixmap = pixmap1.scaled(label_picture1->width(), label_picture1->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 按比例缩放
+    lable_tabgrabToy_showImg->setPixmap(new_pixmap);
+}
 
 void MainWindow::callback_robStatus_subscriber(const industrial_msgs::RobotStatus::ConstPtr robot_status) {
     mutex_devDetector.lock();
@@ -938,6 +1029,8 @@ void MainWindow::thread_rbQthread_rbImpMoudlePrepare() {
 
 void MainWindow::thread_rbQthread_rbVoiceMoudlePrepare() {
     system("rosrun handrb_ui rbVoiceMoudle.sh");
+    sleep(2);
+    sayHi_awakeVoice();
 }
 
 void MainWindow::slot_cBox_tabShakeHand_setMode(int index) {
@@ -1044,6 +1137,58 @@ void MainWindow::slot_btn_tabShakeHand_shakeHandEnd() {
     shakehandOver_publisher.publish(msg);
 }
 
+void MainWindow::slot_btn_tab_voiceDetect_run() {
+    //运行语音控制脚本
+    flag_switchVoiceBtnText=!flag_switchVoiceBtnText;
+    if(flag_switchVoiceBtnText){
+        if(rbQthread_rbVoiceMoudlePrepare->isRunning()){
+            lable_tab_voiceDetect_showImg->setPixmap(pixmap_voiceAwake);
+        } else{
+            rbQthread_rbVoiceMoudlePrepare->start();
+            lable_tab_voiceDetect_showImg->setPixmap(pixmap_voiceAwake);
+        }
+        btn_tab_voiceDetect_run->setText("关闭");
+    } else{
+        if(rbQthread_rbVoiceMoudlePrepare->isRunning()){
+            //关闭语音
+            system("rosrun openni2_tracker voice_shutdown");
+            lable_tab_voiceDetect_showImg->setPixmap(pixmap_voicesleep);
+        }
+        btn_tab_voiceDetect_run->setText("激活");
+    }
+}
+
+void MainWindow::sayHi_awakeVoice() {
+    //启动语音助手
+    string voice_assistant_setup = "大家好，我是华数智能机器人001，很开心为你们服务";
+    std_msgs::String setup_msg;
+    setup_msg.data = voice_assistant_setup.c_str();
+    voice_order_publisher.publish(setup_msg);
+
+}
+
+//抓娃娃一键执行
+void MainWindow::AutoRun_GrabToy() {
+    //1.启动机器人控制模块
+
+    //2.执行抓娃娃命令
+}
+
+//握手一键执行
+void MainWindow::AutoRun_shakeHand() {
+    //1.启动机器人控制模块
+
+    //2.执行抬手动作
+
+    //3.启动阻抗随动模式
+}
+
+//行人检测按钮
+void MainWindow::slot_btn_tab_personDetect_openPersonDetect() {
+
+}
+
+
 //重启UI节点
 void observer_rebootUiNode::rebootUiNode(){
     sp=new ros::AsyncSpinner(1);
@@ -1052,7 +1197,7 @@ void observer_rebootUiNode::rebootUiNode(){
     mainwindow->initRosToptic();
 
 }
-//
+
 //rosservice call /clear_robot_fault "{}"
 //rosservice call /set_mode_srv "mode: 1"
 //rosservice call /set_robot_enable "enable: true"

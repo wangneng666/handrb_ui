@@ -37,6 +37,10 @@ void BaseWindow::initQtVal() {
     fitpixmap_redLight = tmp_pixmap_red.scaled(LABLE_STATUS_W,LABLE_STATUS_H, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
     fitpixmap_greenLight = tmp_pixmap_green.scaled(LABLE_STATUS_W,LABLE_STATUS_H, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
 
+    pixmap_voicesleep=QPixmap(photoPath+"icon/voice_sleep.svg");
+    pixmap_voicesleep = pixmap_voicesleep.scaled(300,300, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
+    pixmap_voiceAwake=QPixmap(photoPath+"icon/voice_awake.svg");
+    pixmap_voiceAwake = pixmap_voiceAwake.scaled(300,300, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
 }
 
 
@@ -544,8 +548,6 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
 
     horizontalLayout_4->addWidget(btn_tabShakeHand_stop);
 
-
-
     btn_tabShakeHand_close = new QPushButton(gBox_tabShakeHand_func);
     btn_tabShakeHand_close->setObjectName(QString::fromUtf8("btn_tabShakeHand_close"));
     btn_tabShakeHand_close->setMaximumSize(QSize(150, 50));
@@ -583,10 +585,10 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     verticalLayout_8->setSpacing(6);
     verticalLayout_8->setContentsMargins(11, 11, 11, 11);
     verticalLayout_8->setObjectName(QString::fromUtf8("verticalLayout_8"));
-    label = new QLabel(groupBox);
-    label->setObjectName(QString::fromUtf8("label"));
+    lable_tabgrabToy_showImg = new QLabel(groupBox);
+    lable_tabgrabToy_showImg->setObjectName(QString::fromUtf8("lable_tabgrabToy_showImg"));
 
-    verticalLayout_8->addWidget(label);
+    verticalLayout_8->addWidget(lable_tabgrabToy_showImg);
 
 
     vLayout_tab_grabToy_1->addWidget(groupBox);
@@ -701,18 +703,18 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     hLayout_tab_grabToy_3 = new QHBoxLayout();
     hLayout_tab_grabToy_3->setSpacing(6);
     hLayout_tab_grabToy_3->setObjectName(QString::fromUtf8("hLayout_tab_grabToy_3"));
+    btn_tab_grabToy_detect = new QPushButton(gBox_tab_grabToy_3);
+    btn_tab_grabToy_detect->setObjectName(QString::fromUtf8("btn_tab_grabToy_detect"));
+    btn_tab_grabToy_detect->setMaximumSize(QSize(150, 50));
+    btn_tab_grabToy_detect->setFixedSize(BTN_W,BTN_H);
+    hLayout_tab_grabToy_3->addWidget(btn_tab_grabToy_detect);
+
     btn_tab_grabToy_run = new QPushButton(gBox_tab_grabToy_3);
     btn_tab_grabToy_run->setObjectName(QString::fromUtf8("btn_tab_grabToy_run"));
     btn_tab_grabToy_run->setMaximumSize(QSize(150, 50));
     btn_tab_grabToy_run->setFixedSize(BTN_W,BTN_H);
+
     hLayout_tab_grabToy_3->addWidget(btn_tab_grabToy_run);
-
-    btn_tab_grabToy_stop = new QPushButton(gBox_tab_grabToy_3);
-    btn_tab_grabToy_stop->setObjectName(QString::fromUtf8("btn_tab_grabToy_stop"));
-    btn_tab_grabToy_stop->setMaximumSize(QSize(150, 50));
-    btn_tab_grabToy_stop->setFixedSize(BTN_W,BTN_H);
-
-    hLayout_tab_grabToy_3->addWidget(btn_tab_grabToy_stop);
 
     btn_tab_grabToy_close = new QPushButton(gBox_tab_grabToy_3);
     btn_tab_grabToy_close->setObjectName(QString::fromUtf8("btn_tab_grabToy_close"));
@@ -737,9 +739,145 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     /*****************************************************/
     tab_personDetect = new QWidget();
     tab_personDetect->setObjectName(QString::fromUtf8("tab_personDetect"));
+    horizontalLayout_12 = new QHBoxLayout(tab_personDetect);
+    horizontalLayout_12->setSpacing(6);
+    horizontalLayout_12->setContentsMargins(11, 11, 11, 11);
+    horizontalLayout_12->setObjectName(QString::fromUtf8("horizontalLayout_12"));
+    hLayout_tab_personDetect_1 = new QHBoxLayout();
+    hLayout_tab_personDetect_1->setSpacing(6);
+    hLayout_tab_personDetect_1->setObjectName(QString::fromUtf8("hLayout_tab_personDetect_1"));
+    vLayout_tab_personDetect_1 = new QVBoxLayout();
+    vLayout_tab_personDetect_1->setSpacing(6);
+    vLayout_tab_personDetect_1->setObjectName(QString::fromUtf8("vLayout_tab_personDetect_1"));
+    gBox_tab_personDetect_1 = new QGroupBox(tab_personDetect);
+    gBox_tab_personDetect_1->setObjectName(QString::fromUtf8("gBox_tab_personDetect_1"));
+    gBox_tab_personDetect_1->setStyleSheet(groupBox_qss);
+    horizontalLayout_15 = new QHBoxLayout(gBox_tab_personDetect_1);
+    horizontalLayout_15->setSpacing(6);
+    horizontalLayout_15->setContentsMargins(11, 11, 11, 11);
+    horizontalLayout_15->setObjectName(QString::fromUtf8("horizontalLayout_15"));
+    label_tab_personDetect_showImag = new QLabel(gBox_tab_personDetect_1);
+    label_tab_personDetect_showImag->setObjectName(QString::fromUtf8("label_tab_personDetect_showImag"));
+
+    horizontalLayout_15->addWidget(label_tab_personDetect_showImag);
+
+
+    vLayout_tab_personDetect_1->addWidget(gBox_tab_personDetect_1);
+
+
+    hLayout_tab_personDetect_1->addLayout(vLayout_tab_personDetect_1);
+
+    vLayout_tab_personDetect_2 = new QVBoxLayout();
+    vLayout_tab_personDetect_2->setSpacing(6);
+    vLayout_tab_personDetect_2->setObjectName(QString::fromUtf8("vLayout_tab_personDetect_2"));
+    gBox_tab_personDetect_2 = new QGroupBox(tab_personDetect);
+    gBox_tab_personDetect_2->setObjectName(QString::fromUtf8("gBox_tab_personDetect_2"));
+    gBox_tab_personDetect_2->setStyleSheet(groupBox_qss);
+    verticalLayout_11 = new QVBoxLayout(gBox_tab_personDetect_2);
+    verticalLayout_11->setSpacing(6);
+    verticalLayout_11->setContentsMargins(11, 11, 11, 11);
+    verticalLayout_11->setObjectName(QString::fromUtf8("verticalLayout_11"));
+    hLayout_tab_personDetect_21 = new QHBoxLayout();
+    hLayout_tab_personDetect_21->setSpacing(6);
+    hLayout_tab_personDetect_21->setObjectName(QString::fromUtf8("hLayout_tab_personDetect_21"));
+    btn_tab_personDetect_openPersonDetect = new QPushButton(gBox_tab_personDetect_2);
+    btn_tab_personDetect_openPersonDetect->setObjectName(QString::fromUtf8("btn_tab_personDetect_openPersonDetect"));
+    btn_tab_personDetect_openPersonDetect->setMaximumSize(QSize(150, 50));
+
+    hLayout_tab_personDetect_21->addWidget(btn_tab_personDetect_openPersonDetect);
+
+
+    verticalLayout_11->addLayout(hLayout_tab_personDetect_21);
+
+
+    vLayout_tab_personDetect_2->addWidget(gBox_tab_personDetect_2);
+
+
+    hLayout_tab_personDetect_1->addLayout(vLayout_tab_personDetect_2);
+
+
+    horizontalLayout_12->addLayout(hLayout_tab_personDetect_1);
+
     tabWidget->addTab(tab_personDetect, QString());
+
+
+    //语音界面
     tab_voiceDetect = new QWidget();
     tab_voiceDetect->setObjectName(QString::fromUtf8("tab_voiceDetect"));
+    horizontalLayout_10 = new QHBoxLayout(tab_voiceDetect);
+    horizontalLayout_10->setSpacing(6);
+    horizontalLayout_10->setContentsMargins(11, 11, 11, 11);
+    horizontalLayout_10->setObjectName(QString::fromUtf8("horizontalLayout_10"));
+    hLayout_tab_voiceDetect = new QHBoxLayout();
+    hLayout_tab_voiceDetect->setSpacing(6);
+    hLayout_tab_voiceDetect->setObjectName(QString::fromUtf8("hLayout_tab_voiceDetect"));
+    vLayout_tab_voiceDetect_2 = new QVBoxLayout();
+    vLayout_tab_voiceDetect_2->setSpacing(6);
+    vLayout_tab_voiceDetect_2->setObjectName(QString::fromUtf8("vLayout_tab_voiceDetect_2"));
+    gBox_tab_voiceDetect_voiceCtl = new QGroupBox(tab_voiceDetect);
+    gBox_tab_voiceDetect_voiceCtl->setObjectName(QString::fromUtf8("gBox_tab_voiceDetect_voiceCtl"));
+    gBox_tab_voiceDetect_voiceCtl->setStyleSheet(groupBox_qss);
+    verticalLayout_9 = new QVBoxLayout(gBox_tab_voiceDetect_voiceCtl);
+    verticalLayout_9->setSpacing(6);
+    verticalLayout_9->setContentsMargins(11, 11, 11, 11);
+    verticalLayout_9->setObjectName(QString::fromUtf8("verticalLayout_9"));
+    hLayout_tab_voiceDetect_ctl1 = new QHBoxLayout();
+    hLayout_tab_voiceDetect_ctl1->setSpacing(6);
+    hLayout_tab_voiceDetect_ctl1->setObjectName(QString::fromUtf8("hLayout_tab_voiceDetect_ctl1"));
+    lable_tab_voiceDetect_showImg = new QLabel(gBox_tab_voiceDetect_voiceCtl);
+    lable_tab_voiceDetect_showImg->setObjectName(QString::fromUtf8("lable_tab_voiceDetect_showImg"));
+    lable_tab_voiceDetect_showImg->setFixedSize(300,300);
+    lable_tab_voiceDetect_showImg->setPixmap(pixmap_voicesleep);
+    hLayout_tab_voiceDetect_ctl1->addWidget(lable_tab_voiceDetect_showImg,0,Qt::AlignHCenter);
+
+
+    verticalLayout_9->addLayout(hLayout_tab_voiceDetect_ctl1);
+
+    hLayout_tab_voiceDetect_ctl2 = new QHBoxLayout();
+    hLayout_tab_voiceDetect_ctl2->setSpacing(6);
+    hLayout_tab_voiceDetect_ctl2->setObjectName(QString::fromUtf8("hLayout_tab_voiceDetect_ctl2"));
+    btn_tab_voiceDetect_run = new QPushButton(gBox_tab_voiceDetect_voiceCtl);
+    btn_tab_voiceDetect_run->setObjectName(QString::fromUtf8("btn_tab_voiceDetect_run"));
+//    btn_tab_voiceDetect_run->setMaximumSize(QSize(200, 100));
+    btn_tab_voiceDetect_run->setFixedSize(200,100);
+
+    hLayout_tab_voiceDetect_ctl2->addWidget(btn_tab_voiceDetect_run);
+
+
+    verticalLayout_9->addLayout(hLayout_tab_voiceDetect_ctl2);
+
+
+    vLayout_tab_voiceDetect_2->addWidget(gBox_tab_voiceDetect_voiceCtl);
+
+
+    hLayout_tab_voiceDetect->addLayout(vLayout_tab_voiceDetect_2);
+
+    vLayout_tab_voiceDetect_1 = new QVBoxLayout();
+    vLayout_tab_voiceDetect_1->setSpacing(6);
+    vLayout_tab_voiceDetect_1->setObjectName(QString::fromUtf8("vLayout_tab_voiceDetect_1"));
+    gBox_tab_voiceDetect_voiceInfo = new QGroupBox(tab_voiceDetect);
+    gBox_tab_voiceDetect_voiceInfo->setObjectName(QString::fromUtf8("gBox_tab_voiceDetect_voiceInfo"));
+    gBox_tab_voiceDetect_voiceInfo->setStyleSheet(groupBox_qss);
+    horizontalLayout_11 = new QHBoxLayout(gBox_tab_voiceDetect_voiceInfo);
+    horizontalLayout_11->setSpacing(6);
+    horizontalLayout_11->setContentsMargins(11, 11, 11, 11);
+    horizontalLayout_11->setObjectName(QString::fromUtf8("horizontalLayout_11"));
+    plainTextEdit = new QPlainTextEdit(gBox_tab_voiceDetect_voiceInfo);
+    plainTextEdit->setObjectName(QString::fromUtf8("plainTextEdit"));
+
+    horizontalLayout_11->addWidget(plainTextEdit);
+
+
+    vLayout_tab_voiceDetect_1->addWidget(gBox_tab_voiceDetect_voiceInfo);
+
+
+    hLayout_tab_voiceDetect->addLayout(vLayout_tab_voiceDetect_1);
+
+    hLayout_tab_voiceDetect->setStretch(0, 1);
+    hLayout_tab_voiceDetect->setStretch(1, 1);
+
+    horizontalLayout_10->addLayout(hLayout_tab_voiceDetect);
+
     tabWidget->addTab(tab_voiceDetect, QString());
     /*****************************************************/
 
@@ -880,7 +1018,7 @@ void BaseWindow::retranslateUi(QMainWindow *MainWindow) {
 
 
     groupBox->setTitle(QApplication::translate("MainWindow", "\345\233\276\345\203\217\346\230\276\347\244\272", nullptr));
-    label->setText(QApplication::translate("MainWindow", "TextLabel", nullptr));
+    lable_tabgrabToy_showImg->setText(QApplication::translate("MainWindow", "TextLabel", nullptr));
     gBox_tab_grabToy_1->setTitle(QApplication::translate("MainWindow", "\345\207\206\345\244\207\347\212\266\346\200\201", nullptr));
     label_tabgrabToy_voiceStatusValue->setText(QString());
     label_tabgrabToy_rbStatusValue->setText(QString());
@@ -896,11 +1034,21 @@ void BaseWindow::retranslateUi(QMainWindow *MainWindow) {
     cBox_tab_grabToy->setItemText(1, QApplication::translate("MainWindow", "\345\243\260\346\216\247\350\247\246\345\217\221", nullptr));
 
     gBox_tab_grabToy_3->setTitle(QApplication::translate("MainWindow", "\345\212\237\350\203\275\346\214\211\351\222\256", nullptr));
-    btn_tab_grabToy_run->setText(QApplication::translate("MainWindow", "\345\220\257\345\212\250", nullptr));
-    btn_tab_grabToy_stop->setText(QApplication::translate("MainWindow", "\345\201\234\346\255\242", nullptr));
+    btn_tab_grabToy_detect->setText(QApplication::translate("MainWindow", "识别检测", nullptr));
+    btn_tab_grabToy_run->setText(QApplication::translate("MainWindow", "\345\201\234\346\255\242", nullptr));
     btn_tab_grabToy_close->setText(QApplication::translate("MainWindow", "\345\205\263\351\227\255", nullptr));
     tabWidget->setTabText(tabWidget->indexOf(tab_grabToy), QApplication::translate("MainWindow", "\346\212\223\345\250\203\345\250\203\347\225\214\351\235\242", nullptr));
+
+    gBox_tab_personDetect_1->setTitle(QApplication::translate("MainWindow", "\345\233\276\345\203\217\346\230\276\347\244\272", nullptr));
+    label_tab_personDetect_showImag->setText(QApplication::translate("MainWindow", "\345\233\276\345\203\217", nullptr));
+    gBox_tab_personDetect_2->setTitle(QApplication::translate("MainWindow", "\345\212\237\350\203\275\346\211\247\350\241\214", nullptr));
+    btn_tab_personDetect_openPersonDetect->setText(QApplication::translate("MainWindow", "\346\211\223\345\274\200\350\241\214\344\272\272\346\243\200\346\265\213", nullptr));
+
     tabWidget->setTabText(tabWidget->indexOf(tab_personDetect), QApplication::translate("MainWindow", "\350\241\214\344\272\272\346\243\200\346\265\213\347\225\214\351\235\242", nullptr));
+    gBox_tab_voiceDetect_voiceCtl->setTitle(QApplication::translate("MainWindow", "\350\257\255\351\237\263\346\216\247\345\210\266\346\240\217", nullptr));
+    btn_tab_voiceDetect_run->setText(QApplication::translate("MainWindow", "\346\277\200\346\264\273", nullptr));
+    gBox_tab_voiceDetect_voiceInfo->setTitle(QApplication::translate("MainWindow", "\350\257\255\351\237\263\344\277\241\346\201\257\346\240\217", nullptr));
+    tabWidget->setTabText(tabWidget->indexOf(tab_voiceDetect), QApplication::translate("MainWindow", "\350\257\255\351\237\263\346\243\200\346\265\213\347\225\214\351\235\242", nullptr));
     tabWidget->setTabText(tabWidget->indexOf(tab_voiceDetect), QApplication::translate("MainWindow", "\350\257\255\351\237\263\346\243\200\346\265\213\347\225\214\351\235\242", nullptr));
     btn_tabrecord_outRecord->setText(QApplication::translate("MainWindow", "\346\227\245\345\277\227\345\257\274\345\207\272", nullptr));
     btn_tabrecord_clearRecord->setText(QApplication::translate("MainWindow", "\346\270\205\351\231\244\346\227\245\345\277\227", nullptr));

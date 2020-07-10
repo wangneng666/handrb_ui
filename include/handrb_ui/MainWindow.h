@@ -71,6 +71,7 @@ public:
 private:
     //全局变量
     QMutex mutex_devDetector;
+    int index_AutoRunShakeHand=0;
     bool flag_switchPersonDecBtnText= false;
     bool flag_switchVoiceBtnText= false;
     bool flag_switchimpedenceText= true;
@@ -81,6 +82,7 @@ private:
     bool flag_rbCtlStartUp= false; //
     bool Holdflag_RobSetMode= false; //
     bool Holdflag_RobDownEnable= false; //
+    bool flag_robPreparePose= false;//机器人到达握手等待点
 
     //加入节点观察者
     observer_rebootUiNode ob_node;
@@ -94,9 +96,11 @@ private:
     devDetector forceSensorConn_Detector{"forceSensorConn_Detector",0, false,label_tabmain_TsensorStatusValue}; //六轴力传感器连接状态
     devDetector impedenceConn_Detector{"impedenceConn_Detector",0, false,label_tabmain_impedenceConnStatusValue}; //阻抗连接状态
     //定时器
+    vector<QTimer*> TimerList;
     QTimer* Timer_listen_status;
     QTimer* Timer_listen_SysResetThread;
     QTimer* Timer_listen_SysErr;
+    QTimer* Timer_forAutoRunShakeHand;
     //ros消息对象
     ros::ServiceClient RobReset_client;
     ros::ServiceClient RobEnable_client;
@@ -114,6 +118,7 @@ private:
     ros::Subscriber forceSensor_subscriber;
     ros::Subscriber impedenceLive_subscriber;
     ros::Subscriber rbCtlBusy_subscriber;
+    ros::Subscriber isOpenFollow_subscriber;//接受手势到位信号
     ros::Publisher voice_order_publisher;
     ros::Publisher visionDetech_publisher;
     ros::Publisher rbGoHome_publisher;
@@ -170,6 +175,7 @@ private:
     void slot_btn_tabShakeHand_stop();
     void slot_btn_tabShakeHand_close();
     void slot_btn_tabShakeHand_shakeHandEnd();
+    void slot_btn_tabShakeHand_AutoRun();
     //抓娃娃界面槽函数
     void slot_btn_tabgrabToy_startRobRun();
     void slot_btn_tabgrabToy_startRobCtl();
@@ -194,10 +200,12 @@ private:
     void callback_forceSensor_subscriber(geometry_msgs::Wrench msg);
     void callback_impedenceLive_subscriber(std_msgs::Bool msg);
     void callback_rbCtlBusy_status_subscriber(std_msgs::Bool msg);
+    void callback_isOpenFollow_subscriber(std_msgs::Bool msg);
     //定时器槽函数
     void slot_timer_listen_status();
     void slot_timer_listen_SysResetThread();
     void slot_timer_listenSysErrThread();
+    void slot_timer_AutoRun_shakeHand();
     //线程函数
     void thread_rbQthread_beginRun();
     void thread_rbQthread_sysStop();

@@ -159,6 +159,7 @@ public:
     QPushButton *btn_tabShakeHand_stop;
     QPushButton *btn_tabShakeHand_close;
     QPushButton *btn_tabShakeHand_shakeHandEnd;
+    QPushButton *btn_tabShakeHand_AutoRun;
     //抓娃娃界面
     QWidget *tab_grabToy;
     QHBoxLayout *horizontalLayout_13;

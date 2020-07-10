@@ -39,6 +39,11 @@ void MainWindow::SysVarInit() {
     Timer_listen_SysErr->setInterval(6000);
     connect(Timer_listen_SysErr, &QTimer::timeout, this, &MainWindow::slot_timer_listenSysErrThread);
 
+    //一键启动自动握手模式
+    Timer_forAutoRunShakeHand = new QTimer(this);
+    Timer_forAutoRunShakeHand->setInterval(1000);
+    connect(Timer_forAutoRunShakeHand, &QTimer::timeout, this, &MainWindow::slot_timer_AutoRun_shakeHand);
+
     qRegisterMetaType<infoLevel>("infoLevel");//信号与槽连接自定义类型需要注册
 
     //初始化节点观察者ROS_INFO_STREAM("----back home ...----");
@@ -110,6 +115,7 @@ void MainWindow::initRosToptic(){
     grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
     robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
     impedenceLive_subscriber=Node->subscribe<std_msgs::Bool>("impedence_live",1,&MainWindow::callback_impedenceLive_subscriber,this);
+    isOpenFollow_subscriber=Node->subscribe<std_msgs::Bool>("is_follow",1,&MainWindow::callback_isOpenFollow_subscriber,this);
 
     //服务
     RobReset_client = Node->serviceClient<hsr_rosi_device::ClearFaultSrv>("/clear_robot_fault");
@@ -147,6 +153,7 @@ void MainWindow::signalAndSlot() {
     connect(btn_tabShakeHand_shakeHandEnd,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_shakeHandEnd);
     connect(btn_tabShakeHand_stop,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_stop);
     connect(btn_tabShakeHand_close,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_close);
+    connect(btn_tabShakeHand_AutoRun,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_AutoRun);
     connect(cBox_tabShakeHand_setMode,SIGNAL(currentIndexChanged(int)), this, SLOT(slot_cBox_tabShakeHand_setMode(int )));
 
     //抓娃娃界面
@@ -425,6 +432,7 @@ void MainWindow::thread_rbQthread_sysStop() {
 //系统复位子线程
 void MainWindow::thread_rbQthread_sysReset() {
     system("rosnode kill $(rosnode list |grep -v handrb_ui)");
+    rbQthread_sysReset->terminate();
 //    flag_havedReset= true;
 //    ob_node.shutdownNode();
 //    system("rosnode kill -a");
@@ -1204,18 +1212,59 @@ void MainWindow::AutoRun_GrabToy() {
     //2.执行抓娃娃命令
 }
 
-//握手一键执行
+//握手功能一键执行
 void MainWindow::AutoRun_shakeHand() {
-    //1.启动机器人控制模块
+    switch (index_AutoRunShakeHand){
+        case 0:
+            if((!RobEnable_Detector.status)&&(!rbQthread_rbRunMoudlePrepare->isRunning())){
+                slot_btn_tabShakeHand_startRobRun();//上使能
+            }
+            if(RobEnable_Detector.status){
+                index_AutoRunShakeHand=1;
+            }
+            break;
+        case 1:
+            if(!rbQthread_shakehand->isRunning()){
+                slot_btn_tabShakeHand_begin();//执行抬手动作
+            }
+            if(flag_robPreparePose){
+                index_AutoRunShakeHand=2;
+            }
+            break;
+        case 2:
+            if(!rbQthread_rbImpMoudlePrepare->isRunning()){
+                slot_btn_tabShakeHand_startimpedence();//启动阻抗随动模式
+            } else{
+                Timer_forAutoRunShakeHand->stop();
+                emit emitQmessageBox(infoLevel::information,"一键启动握功能完成");
+                index_AutoRunShakeHand=0;
+            }
+            break;
+    }
 
-    //2.执行抬手动作
 
-    //3.启动阻抗随动模式
+
 }
 
 //行人检测按钮
 void MainWindow::slot_btn_tab_personDetect_openPersonDetect() {
 
+}
+
+//定时刷新执行握手任务
+void MainWindow::slot_timer_AutoRun_shakeHand() {
+    AutoRun_shakeHand();
+}
+
+//按钮启动定时器
+void MainWindow::slot_btn_tabShakeHand_AutoRun() {
+    if(Timer_forAutoRunShakeHand->isActive()){
+        Timer_forAutoRunShakeHand->start();
+    }
+}
+
+void MainWindow::callback_isOpenFollow_subscriber(std_msgs::Bool msg) {
+        flag_robPreparePose=msg.data;
 }
 
 

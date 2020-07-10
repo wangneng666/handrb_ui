@@ -542,6 +542,13 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     btn_tabShakeHand_shakeHandEnd->setFixedSize(BTN_W,BTN_H);
     horizontalLayout_4->addWidget(btn_tabShakeHand_shakeHandEnd);
 
+    btn_tabShakeHand_AutoRun = new QPushButton(gBox_tabShakeHand_func);
+    btn_tabShakeHand_AutoRun->setObjectName(QString::fromUtf8("btn_tabShakeHand_AutoRun"));
+    btn_tabShakeHand_AutoRun->setMaximumSize(QSize(150, 50));
+    btn_tabShakeHand_AutoRun->setFixedSize(BTN_W,BTN_H);
+    btn_tabShakeHand_AutoRun->setText("一键启动握手");
+    horizontalLayout_4->addWidget(btn_tabShakeHand_AutoRun);
+
     btn_tabShakeHand_stop = new QPushButton(gBox_tabShakeHand_func);
     btn_tabShakeHand_stop->setObjectName(QString::fromUtf8("btn_tabShakeHand_stop"));
     btn_tabShakeHand_stop->setMaximumSize(QSize(150, 50));

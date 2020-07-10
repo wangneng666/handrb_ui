@@ -970,11 +970,32 @@ void MainWindow::slot_btn_tabgrabToy_startRobCtl() {
 }
 
 void MainWindow::slot_btn_tabgrabToy_startvoice() {
-    if (rbQthread_rbImpMoudlePrepare->isRunning()) {
-        emit emitQmessageBox(infoLevel::warning, "阻抗模块程序正在执行中,请不要重复启动!");
-    } else {
-        rbQthread_rbImpMoudlePrepare->start();
+    //
+    if(flag_switchimpedenceText)
+    {
+        if (rbQthread_rbImpMoudlePrepare->isRunning())
+        {
+            emit emitQmessageBox(infoLevel::warning, "阻抗模块程序正在执行中,请不要重复启动!");
+        }
+        else
+        {
+            rbQthread_rbImpMoudlePrepare->start();
+            //切换标签
+            flag_switchimpedenceText=!flag_switchimpedenceText;
+            btn_tabShakeHand_startimpedence->setText("关闭");
+        }
     }
+    else
+    {
+        if (rbQthread_rbImpMoudlePrepare->isRunning())
+        {
+            //关闭阻抗
+            system("rosservice call /stop_motion");
+            system("rosnode kill /hsr_impedance");
+            btn_tabShakeHand_startimpedence->setText("开启");
+        }
+    }
+
 }
 
 void MainWindow::slot_btn_tabgrabToy_run() {

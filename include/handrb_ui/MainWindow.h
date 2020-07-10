@@ -73,7 +73,7 @@ private:
     QMutex mutex_devDetector;
     bool flag_switchPersonDecBtnText= false;
     bool flag_switchVoiceBtnText= false;
-    bool flag_switchimpedenceText= false;
+    bool flag_switchimpedenceText= true;
     bool flag_havedReset= false;
     bool flag_rbEnable= false;
     bool flag_impedenceLive= false;//阻抗随动状态

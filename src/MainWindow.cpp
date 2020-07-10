@@ -10,7 +10,7 @@ MainWindow::MainWindow(ros::NodeHandle *node, QWidget *parent):BaseWindow(node,p
 }
 
 MainWindow::~MainWindow() {
-    system("rosnode kill -a");
+    system((char*)"rosnode kill -a");
     //关闭ros相关进程
 //    system("kill $(ps -ef | grep ros|awk '{print  $2}')");
 }
@@ -262,7 +262,7 @@ void MainWindow::slot_timer_listen_status() {
     {
         if(!RobErr_Detector.status)
         {
-            system("rosservice call /stop_motion");
+            system((char*)"rosservice call /stop_motion");
             srv.request.mode=0;
             RobSetMode_client.call(srv);
         }
@@ -392,7 +392,9 @@ void MainWindow::thread_rbQthread_beginRun() {
             break;
         case 1:
             //启动真机运行launch文件
-            system("roslaunch handrb_ui devconn.launch");
+           //system((const char*)"roslaunch handrb_ui devconn.launch");
+            system("rosrun handrb_ui devConn.sh");
+
 //            system("roslaunch handrb_ui handRobotGrab.launch");
             //如果复位过程序,增需要重新启动本节点
             if(flag_havedReset){ob_node.rebootUiNode();}
@@ -401,15 +403,17 @@ void MainWindow::thread_rbQthread_beginRun() {
             //启动rviz程序
             //如果复位过程序,增需要重新启动本节点
             if(flag_havedReset){ob_node.rebootUiNode();}
-            system("roslaunch handrb_ui devconn.launch");
+            system("rosrun handrb_ui devConn.sh");
+
+            //system("roslaunch handrb_ui devconn.launch");
             //启动rviz文件运行文件
             break;
     }
 }
 //系统停止子线程
 void MainWindow::thread_rbQthread_sysStop() {
-    system("rosservice call /stop_motion");
-    system("rostopic pub -1 /stop_move std_msgs/Bool \"data: true\"");
+    system((char*)"rosservice call /stop_motion");
+    system((char*)"rostopic pub -1 /stop_move std_msgs/Bool \"data: true\"");
 
     // hsr_rosi_device::SetEnableSrv srv;
     // srv.request.enable= false;
@@ -810,7 +814,7 @@ void MainWindow::showLightColor(QLabel *label, string color) {
 //}
 
 void MainWindow::thread_rbQthread_persondeteck() {
-    system("rosrun openni2_tracker peopledetection.sh");
+    system((char*)"rosrun openni2_tracker peopledetection.sh");
 }
 
 void MainWindow::thread_rbQthread_shakehand() {
@@ -882,7 +886,7 @@ void MainWindow::slot_runTimer(QTimer *timer) {
 //}
 
 void MainWindow::thread_rbQthread_voicedeteck() {
-    system("rosrun openni2_tracker voice.sh");
+    system((char*)"rosrun openni2_tracker voice.sh");
 }
 
 void MainWindow::slot_btn_tabShakeHand_startRobRun() {
@@ -936,7 +940,9 @@ void MainWindow::slot_btn_tabShakeHand_stop() {
 
 void MainWindow::slot_btn_tabShakeHand_close() {
     if(rbQthread_rbImpMoudlePrepare->isRunning()){
-        system("rosservice call /stop_motion");
+        system((char*)"rosservice call /stop_motion");
+        system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
+
     }
     hsr_rosi_device::setModeSrv srv;
     srv.request.mode=0;
@@ -990,8 +996,8 @@ void MainWindow::slot_btn_tabgrabToy_startvoice() {
         if (rbQthread_rbImpMoudlePrepare->isRunning())
         {
             //关闭阻抗
-            system("rosservice call /stop_motion");
-            system("rosnode kill /hsr_impedance");
+            system((char*)"rosservice call /stop_motion");
+            system((char*)"rosnode kill /hsr_impedance");
             btn_tabShakeHand_startimpedence->setText("开启");
         }
     }
@@ -1031,7 +1037,7 @@ void MainWindow::thread_rbQthread_rbRunMoudlePrepare() {
 }
 
 void MainWindow::thread_rbQthread_rbCtlMoudlePrepare() {
-    system("rosrun handrb_ui rbCtlMoudle.sh");
+    system((char*)"rosrun handrb_ui rbCtlMoudle.sh");
 }
 
 void MainWindow::thread_rbQthread_rbImpMoudlePrepare() {
@@ -1045,11 +1051,11 @@ void MainWindow::thread_rbQthread_rbImpMoudlePrepare() {
     {
         emit emitQmessageBox(infoLevel::warning, "模式设置服务连接失败!");
     }    
-    system("rosrun handrb_ui rbImpMoudle.sh");
+    system((char*)"rosrun handrb_ui rbImpMoudle.sh");
 }
 
 void MainWindow::thread_rbQthread_rbVoiceMoudlePrepare() {
-    system("rosrun handrb_ui rbVoiceMoudle.sh");
+    system((char*)"rosrun handrb_ui rbVoiceMoudle.sh");
     sleep(2);
     sayHi_awakeVoice();
 }
@@ -1090,7 +1096,7 @@ void MainWindow::callback_rbCtlBusy_status_subscriber(std_msgs::Bool msg) {
 
 bool MainWindow::sendSignal_RbPreparePose() {
     //启动startmove
-    system("rostopic pub /start_move std_msgs/Bool \"data: true\"");
+    system((char*)"rostopic pub -d 1 /start_move std_msgs/Bool \"data: true\"");
     if(!RobEnable_Detector.status){
         emit emitQmessageBox(infoLevel::warning, "机器人未上使能!");
         return false;
@@ -1149,9 +1155,10 @@ void MainWindow::thread_rbQthread_LisionRbErrInfo() {
 
 void MainWindow::slot_btn_tabShakeHand_shakeHandEnd() {
     if(rbQthread_rbImpMoudlePrepare->isRunning()){
-        system("rosservice call /stop_motion");
-    }
 
+        system((char*)"rosservice call /stop_motion");
+        system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
+    }
     hsr_rosi_device::setModeSrv srv;
     srv.request.mode=0;
     RobSetMode_client.call(srv);
@@ -1174,7 +1181,7 @@ void MainWindow::slot_btn_tab_voiceDetect_run() {
     } else{
         if(rbQthread_rbVoiceMoudlePrepare->isRunning()){
             //关闭语音
-            system("rosrun openni2_tracker voice_shutdown");
+            system((char*)"rosrun openni2_tracker voice_shutdown");
             lable_tab_voiceDetect_showImg->setPixmap(pixmap_voicesleep);
         }
         btn_tab_voiceDetect_run->setText("激活");

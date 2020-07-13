@@ -154,7 +154,7 @@ void MainWindow::signalAndSlot() {
     connect(btn_tabShakeHand_begin,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_begin);
     connect(btn_tabShakeHand_shakeHandEnd,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_shakeHandEnd);
     connect(btn_tabShakeHand_stop,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_stop);
-    connect(btn_tabShakeHand_close,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_close);
+    // connect(btn_tabShakeHand_close,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_close);
     connect(btn_tabShakeHand_AutoRun,&QPushButton::clicked,this,&MainWindow::slot_btn_tabShakeHand_AutoRun);
     connect(cBox_tabShakeHand_setMode,SIGNAL(currentIndexChanged(int)), this, SLOT(slot_cBox_tabShakeHand_setMode(int )));
 
@@ -441,7 +441,20 @@ void MainWindow::thread_rbQthread_beginRun() {
 //系统停止子线程
 void MainWindow::thread_rbQthread_sysStop() {
     system((char*)"rosservice call /stop_motion");
+    system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
+    // system("rosservice call /set_mode_srv \"mode: 0\"");
+    hsr_rosi_device::setModeSrv srv;
+    srv.request.mode=0;
+    if(RobSetMode_client.call(srv)){
+        if(srv.response.finsh){
+            emit emitQmessageBox(infoLevel::warning, "模式设置为点动模式!");
+        }
+    }else
+    {
+        emit emitQmessageBox(infoLevel::warning, "模式设置服务连接失败!");
+    }
     system((char*)"rostopic pub -1 /stop_move std_msgs/Bool \"data: true\"");
+
 
     // hsr_rosi_device::SetEnableSrv srv;
     // srv.request.enable= false;

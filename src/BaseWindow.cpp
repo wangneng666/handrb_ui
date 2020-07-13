@@ -958,6 +958,8 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     label_tabShakeHand_voiceStatusValue->setVisible(false);
     btn_tabShakeHand_startvoice->setVisible(false);
 
+    btn_tabShakeHand_close->setVisible(false);
+
     retranslateUi(MainWindow);
 //    QMetaObject::connectSlotsByName(MainWindow);
 }

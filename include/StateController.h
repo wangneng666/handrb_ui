@@ -14,7 +14,7 @@
 #include "std_msgs/Int16.h"
 #include "rb_msgAndSrv/rb_DoubleBool.h"
 #include "rb_msgAndSrv/rb_string.h"
-#include "rb_msgAndSrv/rb_EmptyAndArray.h"
+//#include "rb_msgAndSrv/rb_EmptyAndArray.h"
 #include "sensor_msgs/Image.h"
 #include <cv_bridge/cv_bridge.h>
 #include "hsr_rosi_device/ClearFaultSrv.h"

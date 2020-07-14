@@ -14,6 +14,8 @@
 
 //消息类型头文件
 #include "std_msgs/String.h"
+#include "std_srvs/Empty.h"
+
 #include "std_msgs/Bool.h"
 #include "std_msgs/Int8.h"
 #include "std_msgs/Int16.h"
@@ -29,6 +31,7 @@
 #include "hirop_msgs/robotError.h"
 #include "hirop_msgs/detection.h"
 #include "hirop_msgs/ObjectArray.h"
+#include "industrial_msgs/StopMotion.h"
 
 //标准库
 #include "ros/ros.h"

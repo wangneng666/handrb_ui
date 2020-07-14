@@ -208,7 +208,7 @@ void MainWindow::signalAndSlot() {
     connect(btn_tabgrabToy_startRobCtl,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_startRobCtl);
     connect(btn_tabgrabToy_startvoice,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_startvoice);
     connect(btn_tab_grabToy_run,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_run);
-//    connect(btn_tab_grabToy_run,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_stop);
+    connect(btn_tab_grabToy_run,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_stop);
     connect(btn_tab_grabToy_close,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_close);
     connect(btn_tab_grabToy_detect, &QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_grayDectectObj);
 
@@ -1165,15 +1165,62 @@ void MainWindow::slot_btn_tabgrabToy_run() {
 }
 
 void MainWindow::slot_btn_tabgrabToy_stop() {
-    if (rbQthread_sysStop->isRunning()) {
-        emit emitQmessageBox(infoLevel::warning, "停止正在执行中,请不要重复启动!");
-    } else {
-        rbQthread_sysStop->start();
+//    if (rbQthread_sysStop->isRunning()) {
+//        emit emitQmessageBox(infoLevel::warning, "停止正在执行中,请不要重复启动!");
+//    } else {
+//        rbQthread_sysStop->start();
+//    }
+    ros::ServiceClient backHomeClient = Node->serviceClient<std_srvs::Empty>("/back_home");
+    ros::ServiceClient detectePointClient = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("/handClaw_detectDoll");
+    std_srvs::Empty srv;
+    if(!backHomeClient.call(srv))
+    {
+        ROS_INFO_STREAM("check back home server");
+        return ;
+    }
+    else
+    {
+        ROS_INFO_STREAM("back home SUCCESS");
+    }
+    rb_msgAndSrv::rb_DoubleBool  dSrv;
+    dSrv.request.request = true;
+    if(!detectePointClient.call(dSrv))
+    {
+        ROS_INFO_STREAM("check handClaw_detectDoll server");
+    }
+    else
+    {
+        if(dSrv.response.respond)
+        {
+            ROS_INFO_STREAM("move to detete point SUCCESS");
+        }
+        else
+        {
+            ROS_INFO("move to detect point FAILURE");
+            return ;
+        }
     }
 }
 
 void MainWindow::slot_btn_tabgrabToy_close() {
-
+    ros::ServiceClient stopMotionClient = Node->serviceClient<industrial_msgs::StopMotion>("/stop_motion");
+    industrial_msgs::StopMotion srv;
+    if(stopMotionClient.call(srv))
+    {
+        ROS_ERROR_STREAM("check stop_motion");
+        return ;
+    }
+    else
+    {
+        if(srv.response.code.val == srv.response.code.SUCCESS)
+        {
+            ROS_ERROR_STREAM("stop motion SUCCESS");
+        }
+        else
+        {
+            ROS_ERROR_STREAM("stop motion FAILURE");
+        }
+    }
 }
 
 void MainWindow::thread_rbQthread_rbRunMoudlePrepare() {

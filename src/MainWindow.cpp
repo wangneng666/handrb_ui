@@ -1,4 +1,8 @@
 #include "MainWindow.h"
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf/transform_listener.h>
+#include "pick_place_bridge/PickPlacePose.h"
+
 
 MainWindow::MainWindow(ros::NodeHandle *node, QWidget *parent):BaseWindow(node,parent){
     //系统变量初始化
@@ -110,13 +114,13 @@ void MainWindow::initRosToptic(){
 
     voiceSolveRes_subcriber=Node->subscribe<std_msgs::Int16>("voice_order",1,&MainWindow::callback_voiceSolveRes_subcriber, this);
     voice_order_publisher = Node->advertise<std_msgs::String>("voiceSolve_res", 1);
-
+    
     personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
     grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
     robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
     impedenceLive_subscriber=Node->subscribe<std_msgs::Bool>("impedence_live",1,&MainWindow::callback_impedenceLive_subscriber,this);
     isOpenFollow_subscriber=Node->subscribe<std_msgs::Bool>("is_follow",1,&MainWindow::callback_isOpenFollow_subscriber,this);
-
+    getShakeHandResult_subscriber = Node->subscribe<std_msgs::Int16>("impedance_result",1,&MainWindow::callback_getShakeResult_subscriber,this);
     //服务
     RobReset_client = Node->serviceClient<hsr_rosi_device::ClearFaultSrv>("/clear_robot_fault");
     RobEnable_client = Node->serviceClient<hsr_rosi_device::SetEnableSrv>("/set_robot_enable");
@@ -126,6 +130,14 @@ void MainWindow::initRosToptic(){
     rob_goHome_client = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("rob_goHome");
     RobSetMode_client = Node->serviceClient<hsr_rosi_device::setModeSrv>("/set_mode_srv");
     robGetStatus_client = Node->serviceClient<hirop_msgs::robotError>("getRobotErrorFaultMsg");
+
+    pickServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("pick");
+    placeServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("place");
+
+    // zhua wa wa
+   detectionClient = Node->serviceClient<hirop_msgs::detection>("/detection");
+   // 订阅
+   objectArraySub = Node->subscribe<hirop_msgs::ObjectArray>("object_array", 1, &MainWindow::callback_objectCallBack, this);
 
 }
 
@@ -165,6 +177,8 @@ void MainWindow::signalAndSlot() {
     connect(btn_tab_grabToy_run,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_run);
 //    connect(btn_tab_grabToy_run,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_stop);
     connect(btn_tab_grabToy_close,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_close);
+    connect(btn_tab_grabToy_detect, &QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_grayDectectObj);
+
     //行人检测
     connect(btn_tab_personDetect_openPersonDetect,&QPushButton::clicked,this,&MainWindow::slot_btn_tab_personDetect_openPersonDetect);
 
@@ -314,6 +328,8 @@ void MainWindow::slot_timer_listen_status() {
         impedenceLive_publisher.publish(msg_imp);
         flag_impedenceLive= false;
     }
+
+
     if(RobConn_Detector.status)
     {
         if(!rbQthread_lisionRbErrInfo->isRunning()){
@@ -368,7 +384,7 @@ void MainWindow::slot_btn_tabmain_sysReset() {
         tmp_thread->start();
         LOG("RUNINFO")->logInfoMessage("系统复位");
 
-
+        rbQthread_rbCtlMoudlePrepare->exit();
 //    if (rbQthread_sysReset->isRunning()) {
 //        emit emitQmessageBox(infoLevel::warning, QString("程序正在执行中,请不要重复启动!"));
 //    } else
@@ -557,6 +573,53 @@ void MainWindow::slot_btn_rbGoHomePose() {
 //        rbQthread_grepwawa->start();
 //    }
 //}
+
+/**
+ *
+ * 
+ * 
+ * 
+ */
+
+void MainWindow::callback_getShakeResult_subscriber(std_msgs::Int16 msg){
+    std::cout << "get ShakeReult :"<< msg.data<<std::endl;
+    int ret = msg.data;
+    if(ret == 0){
+        slot_btn_tabShakeHand_shakeHandEnd();
+        impedenceLive_publisher.publish(false);
+    }
+}
+
+void MainWindow::callback_objectCallBack(hirop_msgs::ObjectArray obj)
+{
+    hirop_msgs::ObjectInfo pose = obj.objects.at(0);
+    geometry_msgs::PoseStamped pp2 = pose.pose;
+    transformFrame(pp2, "world");
+    retObj = pp2;
+    std::cout << "<-- objectCallBack ShakeReult ---"<<std::endl;
+    /************************************/
+    pick_place_bridge::PickPlacePose srv;
+    srv.request.Pose = retObj;
+    pickServer_client.call(srv);
+    if(srv.response.result != true){
+        std::cout << "planning pick error  ---"<<std::endl;
+        return ;
+    }
+    ROS_INFO_STREAM("****************************************************");
+    /*******************************/
+    srv.request.Pose.pose.position.x = 0.95;
+    srv.request.Pose.pose.position.y = -0.45;
+    srv.request.Pose.pose.position.z = 1.51;
+    srv.request.Pose.pose.orientation.x = 0;
+    srv.request.Pose.pose.orientation.y = 0;
+    srv.request.Pose.pose.orientation.z = 0;
+    srv.request.Pose.pose.orientation.w = 1;
+    placeServer_client.call(srv);
+    if(srv.response.result != true){
+        std::cout << "place pick error  ---"<<std::endl;
+        return ;
+    }
+}
 
 void MainWindow::slot_btn_tabrecord_outRecord() {
     QString file_path = QFileDialog::getOpenFileName(this,"选择文件",logPath, "Files(*.log)");
@@ -1194,8 +1257,12 @@ void MainWindow::thread_rbQthread_LisionRbErrInfo() {
         emit emitQmessageBox(infoLevel::information,tmp);
     }
 }
-
+/**
+ * 任务停止
+ * 
+ */
 void MainWindow::slot_btn_tabShakeHand_shakeHandEnd() {
+
     if(rbQthread_rbImpMoudlePrepare->isRunning()){
 
         system((char*)"rosservice call /stop_motion");
@@ -1305,6 +1372,18 @@ void MainWindow::slot_btn_startSensor() {
     system("rosrun gripper_bridge opensensor.sh  &");
 }
 
+void MainWindow::slot_btn_tabgrabToy_grayDectectObj()
+{
+    hirop_msgs::detection d;
+    d.request.detectorName = "Yolo6d";
+    d.request.detectorType = 1;
+    d.request.objectName = "toy1";
+    if(!detectionClient.call(d)){
+
+        return;
+    }
+}
+
 //重启UI节点
 void observer_rebootUiNode::rebootUiNode(){
     sp=new ros::AsyncSpinner(1);
@@ -1313,6 +1392,55 @@ void observer_rebootUiNode::rebootUiNode(){
     mainwindow->initRosToptic();
 
 }
+
+
+bool MainWindow::transformFrame(geometry_msgs::PoseStamped& poseStamped, std::string frame_id)
+{
+
+    geometry_msgs::PoseStamped* worldFramePose = new geometry_msgs::PoseStamped[1];
+    geometry_msgs::PoseStamped* otherFramePose = new geometry_msgs::PoseStamped[1];
+    tf::TransformListener listener;
+
+    otherFramePose[0] = poseStamped;
+    for(int i=0; i < 5; ++i)
+    {
+        try
+        {
+            listener.transformPose(frame_id, otherFramePose[0], worldFramePose[0]);
+            break;
+        }
+        catch(tf::TransformException& ex)
+        {
+            ROS_INFO_STREAM(ex.what());
+            ros::WallDuration(1).sleep();
+            continue;
+        }
+    }
+    poseStamped = worldFramePose[0];
+    poseStamped.pose.orientation.x = 0;
+    poseStamped.pose.orientation.y = 0;
+    poseStamped.pose.orientation.z = 0;
+    poseStamped.pose.orientation.w = 1;
+    delete[] worldFramePose;
+    delete[] otherFramePose;
+    double add[3] = {0};
+    Node->getParam("/grasp_place/position_x_add", add[0]);
+    Node->getParam("/grasp_place/position_y_add", add[1]);
+    Node->getParam("/grasp_place/position_z_add", add[2]);
+
+    poseStamped.pose.position.x += add[0];
+    poseStamped.pose.position.y += add[1];
+    poseStamped.pose.position.z += add[2];
+    if(poseStamped.header.frame_id == "world")
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 
 //rosservice call /clear_robot_fault "{}"
 //rosservice call /set_mode_srv "mode: 1"

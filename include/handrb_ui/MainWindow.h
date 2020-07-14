@@ -26,6 +26,8 @@
 #include "geometry_msgs/Wrench.h"
 #include "hsr_rosi_device/setModeSrv.h"
 #include "hirop_msgs/robotError.h"
+#include "hirop_msgs/detection.h"
+#include "hirop_msgs/ObjectArray.h"
 
 //标准库
 #include "ros/ros.h"
@@ -110,6 +112,10 @@ private:
     ros::ServiceClient rob_goHome_client;
     ros::ServiceClient RobSetMode_client;
     ros::ServiceClient robGetStatus_client;
+    ros::ServiceClient detectionClient;
+    ros::ServiceClient pickServer_client;
+    ros::ServiceClient placeServer_client;
+
     ros::Subscriber voiceSolveRes_subcriber;
     ros::Subscriber personDetectRes_subcriber;
     ros::Subscriber grabDollImagRes_subcriber;
@@ -119,6 +125,10 @@ private:
     ros::Subscriber impedenceLive_subscriber;
     ros::Subscriber rbCtlBusy_subscriber;
     ros::Subscriber isOpenFollow_subscriber;//接受手势到位信号
+    ros::Subscriber getShakeHandResult_subscriber;//接受手势到位信号
+
+    ros::Subscriber objectArraySub;
+
     ros::Publisher voice_order_publisher;
     ros::Publisher visionDetech_publisher;
     ros::Publisher rbGoHome_publisher;
@@ -184,6 +194,7 @@ private:
     void slot_btn_tabgrabToy_run();
     void slot_btn_tabgrabToy_stop();
     void slot_btn_tabgrabToy_close();
+    void slot_btn_tabgrabToy_grayDectectObj();
     //语音控制页面
     void slot_btn_tab_voiceDetect_run();
     //行人检测功能函数
@@ -202,6 +213,9 @@ private:
     void callback_impedenceLive_subscriber(std_msgs::Bool msg);
     void callback_rbCtlBusy_status_subscriber(std_msgs::Bool msg);
     void callback_isOpenFollow_subscriber(std_msgs::Bool msg);
+    void callback_getShakeResult_subscriber(std_msgs::Int16 msg);
+
+    void callback_objectCallBack(hirop_msgs::ObjectArray obj);
     //定时器槽函数
     void slot_timer_listen_status();
     void slot_timer_listen_SysResetThread();
@@ -244,7 +258,9 @@ private slots:
     void slot_rbQthread_listenSysResetStart();//监听系统复位线程启动
     void slot_rbQthread_listenFinish();//监听线程资源释放
     void slot_runTimer(QTimer* timer);
-
+private:
+    bool transformFrame(geometry_msgs::PoseStamped& poseStamped, std::string frame_id="world");
+    geometry_msgs::PoseStamped  retObj;
 
 };
 

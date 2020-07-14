@@ -13,6 +13,7 @@ rb_msgAndSrv
   sensor_msgs
   cv_bridge
   image_transport
+  tf
 )
 find_package(OpenCV)
 MESSAGE(STATUS "OpenCV--include path: ${OpenCV_INCLUDE_DIRS}")

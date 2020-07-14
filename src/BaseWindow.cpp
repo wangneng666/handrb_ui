@@ -776,12 +776,12 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
     btn_tab_grabToy_detect->setFixedSize(BTN_W,BTN_H);
     hLayout_tab_grabToy_3->addWidget(btn_tab_grabToy_detect);
 
-    btn_tab_grabToy_run = new QPushButton(gBox_tab_grabToy_3);
-    btn_tab_grabToy_run->setObjectName(QString::fromUtf8("btn_tab_grabToy_run"));
-    btn_tab_grabToy_run->setMaximumSize(QSize(150, 50));
-    btn_tab_grabToy_run->setFixedSize(BTN_W,BTN_H);
+    btn_tab_grabToy_GoDetectPose = new QPushButton(gBox_tab_grabToy_3);
+    btn_tab_grabToy_GoDetectPose->setObjectName(QString::fromUtf8("btn_tab_grabToy_GoDetectPose"));
+    btn_tab_grabToy_GoDetectPose->setMaximumSize(QSize(150, 50));
+    btn_tab_grabToy_GoDetectPose->setFixedSize(BTN_W,BTN_H);
 
-    hLayout_tab_grabToy_3->addWidget(btn_tab_grabToy_run);
+    hLayout_tab_grabToy_3->addWidget(btn_tab_grabToy_GoDetectPose);
 
     btn_tab_grabToy_close = new QPushButton(gBox_tab_grabToy_3);
     btn_tab_grabToy_close->setObjectName(QString::fromUtf8("btn_tab_grabToy_close"));
@@ -1109,7 +1109,7 @@ void BaseWindow::retranslateUi(QMainWindow *MainWindow) {
 
     gBox_tab_grabToy_3->setTitle(QApplication::translate("MainWindow", "\345\212\237\350\203\275\346\214\211\351\222\256", nullptr));
     btn_tab_grabToy_detect->setText(QApplication::translate("MainWindow", "识别检测", nullptr));
-    btn_tab_grabToy_run->setText(QApplication::translate("MainWindow", "\345\201\234\346\255\242", nullptr));
+    btn_tab_grabToy_GoDetectPose->setText(QApplication::translate("MainWindow", "回到检测点", nullptr));
     btn_tab_grabToy_close->setText(QApplication::translate("MainWindow", "\345\205\263\351\227\255", nullptr));
     tabWidget->setTabText(tabWidget->indexOf(tab_grabToy), QApplication::translate("MainWindow", "\346\212\223\345\250\203\345\250\203\347\225\214\351\235\242", nullptr));
 

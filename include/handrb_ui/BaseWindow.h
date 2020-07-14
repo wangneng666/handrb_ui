@@ -200,7 +200,7 @@ public:
     QHBoxLayout *horizontalLayout_16;
     QHBoxLayout *hLayout_tab_grabToy_3;
     QPushButton *btn_tab_grabToy_detect;
-    QPushButton *btn_tab_grabToy_run;
+    QPushButton *btn_tab_grabToy_GoDetectPose;
     QPushButton *btn_tab_grabToy_close;
     //行人检测界面
     QWidget *tab_personDetect;

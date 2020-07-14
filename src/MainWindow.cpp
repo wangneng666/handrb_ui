@@ -207,9 +207,9 @@ void MainWindow::signalAndSlot() {
     connect(btn_tabgrabToy_startRobRun,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_startRobRun);
     connect(btn_tabgrabToy_startRobCtl,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_startRobCtl);
     connect(btn_tabgrabToy_startvoice,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_startvoice);
-    connect(btn_tab_grabToy_run,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_run);
-    connect(btn_tab_grabToy_run,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_stop);
     connect(btn_tab_grabToy_close,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_close);
+//    connect(btn_tab_grabToy_GoDetectPose,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_run);
+    connect(btn_tab_grabToy_GoDetectPose,&QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_stop);
     connect(btn_tab_grabToy_detect, &QPushButton::clicked,this,&MainWindow::slot_btn_tabgrabToy_grayDectectObj);
 
     //行人检测

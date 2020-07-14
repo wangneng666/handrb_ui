@@ -19,7 +19,7 @@
 #include "std_msgs/Bool.h"
 #include "std_msgs/Int8.h"
 #include "std_msgs/Int16.h"
-#include "rb_msgAndSrv/rb_DoubleBool.h"
+#include "rb_msgAndSrv/rb_DoubleBool.h" //"open_visiondetect"
 #include "rb_msgAndSrv/rb_string.h"
 #include "sensor_msgs/Image.h"
 #include <cv_bridge/cv_bridge.h>

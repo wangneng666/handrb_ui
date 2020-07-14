@@ -66,8 +66,10 @@ add_executable(main
         src/main.cpp
         include/handrb_ui/MainWindow.h
         include/handrb_ui/RbQthread.h
+        include/StateController.h
         src/MainWindow.cpp
         src/BaseWindow.cpp
+        src/StateController.cpp
         )
 
 target_link_libraries(

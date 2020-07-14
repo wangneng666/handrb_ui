@@ -6,6 +6,7 @@
 #include "RbQthread.h"
 #include "gloalVal.h"
 #include "logmanager.h"
+#include "include/StateController.h"
 //opencv库
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
@@ -84,6 +85,9 @@ private:
     bool Holdflag_RobDownEnable= false; //
     bool flag_robPreparePose= false;//机器人到达握手等待点
 
+    StateController* stateController;//逻辑控制模块
+    controllerState ctrlState;
+    rosTopicHandle rosTopicHd;
     //加入节点观察者
     observer_rebootUiNode ob_node;
     //设备监控
@@ -110,6 +114,7 @@ private:
     ros::ServiceClient rob_goHome_client;
     ros::ServiceClient RobSetMode_client;
     ros::ServiceClient robGetStatus_client;
+    ros::ServiceClient personDetect_client;
     ros::Subscriber voiceSolveRes_subcriber;
     ros::Subscriber personDetectRes_subcriber;
     ros::Subscriber grabDollImagRes_subcriber;
@@ -128,7 +133,7 @@ private:
     ros::Publisher robStatusSend_publisher;
     //线程句柄
     vector<rbQthread*> rbQthreadList;
-    rbQthread* rbQthread_devConnOrRviz;
+    rbQthread* rbQthread_devConn;
     rbQthread* rbQthread_beginRun;
     rbQthread* rbQthread_sysStop;
     rbQthread* rbQthread_sysReset;
@@ -155,6 +160,7 @@ private:
 
 //*****************************槽函数*******************************************
     //主界面槽函数
+    void slot_btn_tabmain_devConn();//设备连接
     void slot_btn_tabmain_beginRun();//开始运行
     void slot_btn_tabmain_sysStop();//设备停止
     void slot_btn_tabmain_sysReset();//系统复位
@@ -208,6 +214,7 @@ private:
     void slot_timer_listenSysErrThread();
     void slot_timer_AutoRun_shakeHand();
     //线程函数
+    void thread_rbQthread_devConn();
     void thread_rbQthread_beginRun();
     void thread_rbQthread_sysStop();
     void thread_rbQthread_sysReset();

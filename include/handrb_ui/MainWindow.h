@@ -116,14 +116,12 @@ private:
     ros::ServiceClient rob_goHome_client;
     ros::ServiceClient RobSetMode_client;
     ros::ServiceClient robGetStatus_client;
-<<<<<<< HEAD
+
     ros::ServiceClient detectionClient;
     ros::ServiceClient pickServer_client;
     ros::ServiceClient placeServer_client;
-
-=======
     ros::ServiceClient personDetect_client;
->>>>>>> 9743df3dc464367ff135c912b096f0b2c0df13cd
+
     ros::Subscriber voiceSolveRes_subcriber;
     ros::Subscriber personDetectRes_subcriber;
     ros::Subscriber grabDollImagRes_subcriber;

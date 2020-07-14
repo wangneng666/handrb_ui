@@ -12,7 +12,10 @@ MainWindow::MainWindow(ros::NodeHandle *node, QWidget *parent):BaseWindow(node,p
     //信号与槽绑定
     signalAndSlot();
 
-    stateController->lable_showinfo=lable_tab_voiceDetect_showImg;
+    stateController->lable_showinfo=label_tab_voiceMonitor_1;
+    stateController->plainTextEdit=plainTextEdit_2;
+    ctrlState.RobNormalState= true;
+    stateController->updateState(&ctrlState);
 }
 
 MainWindow::~MainWindow() {
@@ -120,11 +123,9 @@ void MainWindow::initRosToptic(){
 //    camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
     forceSensor_subscriber=Node->subscribe<geometry_msgs::Wrench>("daq_data", 1000, &MainWindow::callback_forceSensor_subscriber, this);
     voiceSolveRes_subcriber=Node->subscribe<std_msgs::Int16>("voice_order",1,&MainWindow::callback_voiceSolveRes_subcriber, this);
-<<<<<<< HEAD
+
     voice_order_publisher = Node->advertise<std_msgs::String>("voiceSolve_res", 1);
-    
-=======
->>>>>>> 9743df3dc464367ff135c912b096f0b2c0df13cd
+
     personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
     grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
     robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
@@ -140,7 +141,7 @@ void MainWindow::initRosToptic(){
     rob_goHome_client = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("rob_goHome");
     RobSetMode_client = Node->serviceClient<hsr_rosi_device::setModeSrv>("/set_mode_srv");
     robGetStatus_client = Node->serviceClient<hirop_msgs::robotError>("getRobotErrorFaultMsg");
-    personDetect_client = Node->serviceClient<rb_msgAndSrv::rb_EmptyAndArray>("personDetect_res");
+    personDetect_client = Node->serviceClient<hirop_msgs::connectGripper>("personDetect_res");
 
     rosTopicHd.RobReset_client=&RobReset_client;
     rosTopicHd.RobEnable_client=&RobEnable_client;
@@ -464,6 +465,7 @@ void MainWindow::thread_rbQthread_sysStop() {
         emit emitQmessageBox(infoLevel::warning, "模式设置服务连接失败!");
     }
     system((char*)"rostopic pub -1 /stop_move std_msgs/Bool \"data: true\"");
+    stateController->isStop= true;
 }
 
 //系统复位 goto 等5s定时重启
@@ -611,19 +613,14 @@ void MainWindow::slot_btn_rbGoHomePose() {
 //    }
 //}
 
-/**
- *
- * 
- * 
- * 
- */
-
 void MainWindow::callback_getShakeResult_subscriber(std_msgs::Int16 msg){
     std::cout << "get ShakeReult :"<< msg.data<<std::endl;
     int ret = msg.data;
     if(ret == 0){
-        slot_btn_tabShakeHand_shakeHandEnd();
-        impedenceLive_publisher.publish(false);
+        ctrlState.isEnd_shakeHand= true;
+        stateController->updateState(&ctrlState);
+//        slot_btn_tabShakeHand_shakeHandEnd();
+//        impedenceLive_publisher.publish(false);
     }
 }
 
@@ -817,6 +814,7 @@ void MainWindow::callback_personDetectRes_subcriber(const sensor_msgs::Image::Co
     QPixmap new_pixmap = tmp_pixmap.scaled(label_tab_personDetect_showImag->width(), label_tab_personDetect_showImag->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
 //    QPixmap tmp_pixmap = pixmap1.scaled(label_picture1->width(), label_picture1->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 按比例缩放
     label_tab_personDetect_showImag->setPixmap(new_pixmap);
+    label_tab_voiceMonitor_2->setPixmap(new_pixmap);
 }
 //
 void MainWindow::callback_grabDollImagRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
@@ -1315,12 +1313,11 @@ void MainWindow::thread_rbQthread_LisionRbErrInfo() {
  * 任务停止
  * 
  */
-void MainWindow::slot_btn_tabShakeHand_shakeHandEnd() {
-<<<<<<< HEAD
-
-    if(rbQthread_rbImpMoudlePrepare->isRunning()){
-=======
-    switch (cbox_tabmain_chooseMode->currentIndex()){
+void MainWindow::slot_btn_tabShakeHand_shakeHandEnd()
+{
+//    if(rbQthread_rbImpMoudlePrepare->isRunning()){
+    switch (cbox_tabmain_chooseMode->currentIndex())
+    {
         case 0:
             emit emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
             break;
@@ -1332,8 +1329,6 @@ void MainWindow::slot_btn_tabShakeHand_shakeHandEnd() {
         case 2:
             //按钮控制模式
             if(rbQthread_rbImpMoudlePrepare->isRunning()){
->>>>>>> 9743df3dc464367ff135c912b096f0b2c0df13cd
-
                 system((char*)"rosservice call /stop_motion");
                 system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
             }

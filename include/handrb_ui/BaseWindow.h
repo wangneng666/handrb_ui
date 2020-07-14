@@ -133,6 +133,16 @@ public:
     QHBoxLayout *horizontalLayout_20;
     QPushButton *btn_rbGoHomePose;
     QPushButton *btn_startSensor;
+    //声音调试界面
+    QWidget *tab_voiceMonitor;
+    QHBoxLayout *horizontalLayout_21;
+    QHBoxLayout *hLayout_tab_voiceMonitor_1;
+    QVBoxLayout *vLayout_tab_voiceMonitor_1;
+    QLabel *label_tab_voiceMonitor_2;
+    QVBoxLayout *vLayout_tab_voiceMonitor_2;
+    QLabel *label_tab_voiceMonitor_1;
+    QPlainTextEdit *plainTextEdit_2;
+
     //握手界面
     QWidget *tab_shakeHand;
     QVBoxLayout *verticalLayout_6;

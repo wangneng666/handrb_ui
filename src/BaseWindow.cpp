@@ -410,6 +410,52 @@ void BaseWindow::initUi(QMainWindow *MainWindow) {
 
     tabWidget->addTab(tab_debug, QString());
 
+    //*********************************************************
+    tab_voiceMonitor = new QWidget();
+    tab_voiceMonitor->setObjectName(QString::fromUtf8("tab_voiceMonitor"));
+    horizontalLayout_21 = new QHBoxLayout(tab_voiceMonitor);
+    horizontalLayout_21->setSpacing(6);
+    horizontalLayout_21->setContentsMargins(11, 11, 11, 11);
+    horizontalLayout_21->setObjectName(QString::fromUtf8("horizontalLayout_21"));
+    hLayout_tab_voiceMonitor_1 = new QHBoxLayout();
+    hLayout_tab_voiceMonitor_1->setSpacing(6);
+    hLayout_tab_voiceMonitor_1->setObjectName(QString::fromUtf8("hLayout_tab_voiceMonitor_1"));
+    vLayout_tab_voiceMonitor_1 = new QVBoxLayout();
+    vLayout_tab_voiceMonitor_1->setSpacing(6);
+    vLayout_tab_voiceMonitor_1->setObjectName(QString::fromUtf8("vLayout_tab_voiceMonitor_1"));
+    label_tab_voiceMonitor_2 = new QLabel(tab_voiceMonitor);
+    label_tab_voiceMonitor_2->setObjectName(QString::fromUtf8("label_tab_voiceMonitor_2"));
+
+    vLayout_tab_voiceMonitor_1->addWidget(label_tab_voiceMonitor_2);
+
+
+    hLayout_tab_voiceMonitor_1->addLayout(vLayout_tab_voiceMonitor_1);
+
+    vLayout_tab_voiceMonitor_2 = new QVBoxLayout();
+    vLayout_tab_voiceMonitor_2->setSpacing(6);
+    vLayout_tab_voiceMonitor_2->setObjectName(QString::fromUtf8("vLayout_tab_voiceMonitor_2"));
+    label_tab_voiceMonitor_1 = new QLabel(tab_voiceMonitor);
+    label_tab_voiceMonitor_1->setObjectName(QString::fromUtf8("label_tab_voiceMonitor_1"));
+
+    vLayout_tab_voiceMonitor_2->addWidget(label_tab_voiceMonitor_1);
+
+    plainTextEdit_2 = new QPlainTextEdit(tab_voiceMonitor);
+    plainTextEdit_2->setObjectName(QString::fromUtf8("plainTextEdit_2"));
+
+    vLayout_tab_voiceMonitor_2->addWidget(plainTextEdit_2);
+
+    vLayout_tab_voiceMonitor_2->setStretch(0, 1);
+    vLayout_tab_voiceMonitor_2->setStretch(1, 4);
+
+    hLayout_tab_voiceMonitor_1->addLayout(vLayout_tab_voiceMonitor_2);
+
+    hLayout_tab_voiceMonitor_1->setStretch(0, 1);
+    hLayout_tab_voiceMonitor_1->setStretch(1, 1);
+
+    horizontalLayout_21->addLayout(hLayout_tab_voiceMonitor_1);
+
+    tabWidget->addTab(tab_voiceMonitor, QString());
+
     /*****************************************************/
     tab_shakeHand = new QWidget();
     tab_shakeHand->setObjectName(QString::fromUtf8("tab_shakeHand"));
@@ -995,8 +1041,8 @@ void BaseWindow::retranslateUi(QMainWindow *MainWindow) {
     label_tabmain_rbBusyStatusValue->setText(QString());
     groupBox_tabmain_2->setTitle(QApplication::translate("MainWindow", "\346\250\241\345\274\217\351\200\211\346\213\251", nullptr));
     cbox_tabmain_chooseMode->setItemText(0, QApplication::translate("MainWindow", "\350\257\267\351\200\211\346\213\251\350\277\220\350\241\214\346\250\241\345\274\217", nullptr));
-    cbox_tabmain_chooseMode->setItemText(1, QApplication::translate("MainWindow", "声音控制模式", nullptr));
-    cbox_tabmain_chooseMode->setItemText(2, QApplication::translate("MainWindow", "按钮控制模式", nullptr));
+    cbox_tabmain_chooseMode->setItemText(1, QApplication::translate("MainWindow", "自动模式", nullptr));
+    cbox_tabmain_chooseMode->setItemText(2, QApplication::translate("MainWindow", "手动模式", nullptr));
 
     groupBox_tabmain_3->setTitle(QApplication::translate("MainWindow", "\347\263\273\347\273\237\345\212\237\350\203\275", nullptr));
     btn_tabmain_beginRun->setText(QApplication::translate("MainWindow", "\345\274\200\345\247\213\350\277\220\350\241\214", nullptr));
@@ -1015,6 +1061,11 @@ void BaseWindow::retranslateUi(QMainWindow *MainWindow) {
     btn_rbGoHomePose->setText(QApplication::translate("MainWindow", "\346\234\272\345\231\250\344\272\272\345\233\236\345\216\237\347\202\271", nullptr));
     tabWidget->setTabText(tabWidget->indexOf(tab_debug), QApplication::translate("MainWindow", "\350\260\203\350\257\225\351\241\265\351\235\242", nullptr));
     tabWidget->setTabText(tabWidget->indexOf(tab_shakeHand), QApplication::translate("MainWindow", "\346\217\241\346\211\213\344\272\244\344\272\222\347\225\214\351\235\242", nullptr));
+
+    label_tab_voiceMonitor_2->setText(QApplication::translate("MainWindow", "图片", nullptr));
+    label_tab_voiceMonitor_1->setText(QApplication::translate("MainWindow", "模式[]:,步序[]", nullptr));
+    tabWidget->setTabText(tabWidget->indexOf(tab_voiceMonitor), QApplication::translate("MainWindow", "\350\257\255\351\237\263\346\216\247\345\210\266\347\233\221\346\216\247\351\241\265\351\235\242", nullptr));
+
 
     gBox_tabShakeHand_status->setTitle(QApplication::translate("MainWindow", "\345\207\206\345\244\207\347\212\266\346\200\201", nullptr));
     label_tabShakeHand_impStatusValue->setText(QString());

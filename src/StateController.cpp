@@ -7,9 +7,6 @@ StateController::StateController() {
     //声控自动运行模式
     rbQthread_voiceCtl_AutoRun = new rbQthread();
     rbQthread_voiceCtl_AutoRun->setParm5(this,&StateController::voiceCtl_AutoRun);
-    //实时更新数据
-    rbQthread_updateState = new rbQthread();
-    rbQthread_updateState->setParm6(this,&StateController::updateState,ctlState);
     //
     rbQthread_voiceCtl_modeTask_N1= new rbQthread();
     rbQthread_voiceCtl_modeTask_1= new rbQthread();
@@ -35,54 +32,66 @@ StateController::StateController() {
     rbQthreadList.push_back(rbQthread_voiceCtl_modeTask_4);
     rbQthreadList.push_back(rbQthread_voiceCtl_modeTask_5);
     rbQthreadList.push_back(rbQthread_rbGoShakeHandPose);
+    cout<<"完成构造函数"<<endl;
 }
 
 
 void StateController::start() {
+    cout<<"开始运行"<<endl;
     if(!rbQthread_voiceCtl_AutoRun->isRunning()){
+        cout<<"启动开始线程"<<endl;
+        initVal();
         rbQthread_voiceCtl_AutoRun->start();
     } else{
-        cout<<"rbQthread_AutoRun线程正在运行中"<<endl;
+        cout<<"rbQthread_AutoRun线程正在运行中,请不要重新启动"<<endl;
     }
-    if(!rbQthread_updateState->isRunning()){
-        rbQthread_updateState->start();
+    if(!rbQthread_spin->isRunning()){
+        rbQthread_spin->start();
     }
-    rbQthread_spin->start();
 }
 
 //自动运行
 void StateController::voiceCtl_AutoRun() {
     while (!isStop)
     {
+        sleep(1);
+        cout<<"mode="<<mode<<endl;
+        cout<<"进入主业务逻辑"<<endl;
         //主业务功能
         switch (mode)
         {
             //模式:-1(故障模式) 退出
             case -1:
+                    plainTextEdit->appendPlainText("进入故障模式-1");
                     ContrlMode_N1_task();//检测到故障马上停止运动
                 break;
             //模式:0(等待模式)
             case 0:
                 if(isStart){
+                    cout<<"开始"<<endl;
                     mode=1;
                     isStart= false;
+                    plainTextEdit->appendPlainText("进入模式1,行人检测");
                 }
                 break;
             //模式:1(行人检测模式)
             case 1:
                 if((!assist_funcRunOnce)&&(!rbQthread_voiceCtl_modeTask_1->isRunning())){
+                    cout<<"启动线程rbQthread_voiceCtl_modeTask_1"<<endl;
                     rbQthread_voiceCtl_modeTask_1->start();
                     assist_funcRunOnce= true;
                 }
                 if(voiceStep==13&&(!rbQthread_voiceCtl_modeTask_1->isRunning())){
                     mode=2;
                     assist_funcRunOnce= false;
+                    plainTextEdit->appendPlainText("进入模式2");
                 }
                 break;
             //模式:2(行人减速设置模式)
             case 2:
                 //a. 设置减速模式
-                mode=2;
+                mode=3;
+                plainTextEdit->appendPlainText("进入模式3,语音选择功能");
                 break;
             //模式:3(等待握手抓娃娃/功能触发)
             case 3:
@@ -93,6 +102,7 @@ void StateController::voiceCtl_AutoRun() {
                 if(voiceStep==32&&(!rbQthread_voiceCtl_modeTask_3->isRunning())){
                     mode=4;
                     assist_funcRunOnce= false;
+                    plainTextEdit->appendPlainText("进入模式4,选择握手功能");
                 }
                 if(voiceStep==33&&(!rbQthread_voiceCtl_modeTask_3->isRunning())){
                     mode=5;
@@ -106,6 +116,7 @@ void StateController::voiceCtl_AutoRun() {
                 }
                 if(voiceStep==43&&(!rbQthread_voiceCtl_modeTask_4->isRunning())){
                     mode=1;
+                    plainTextEdit->appendPlainText("进入模式1,等待行人检测");
                     assist_funcRunOnce= false;
                 }
                 break;
@@ -118,8 +129,28 @@ void StateController::voiceCtl_AutoRun() {
                 if(voiceStep==53&&(!rbQthread_voiceCtl_modeTask_5->isRunning())){
                     mode=1;
                     assist_funcRunOnce= false;
+                    plainTextEdit->appendPlainText("进入模式1,等待行人检测");
                 }
                 break;
+        }
+    }
+}
+
+
+void StateController::initVal(){
+    //数据初始初始化
+    ctlState->isOk_robPreparePose= false;
+    ctlState->flag_rbCtlBusy= false;
+    ctlState->isEnd_shakeHand= false;
+    ctlState->voice_order=-1;
+    isStop= false;
+    mode=0;
+    voiceStep=0;
+    assist_funcRunOnce= false;
+    for(auto thread:rbQthreadList){
+        if(thread->isRunning()){
+            thread->terminate();
+            cout<<"释放线程"<<endl;
         }
     }
 }
@@ -168,17 +199,14 @@ void StateController::ContrlMode_N1_task() {
     system("rosservice call /set_mode_srv \"mode: 0\"");
     system("rostopic pub -1 /stop_move std_msgs/Bool \"data: true\"");
     //数据初始初始化
-    ctlState->isOk_robPreparePose= false;
-    ctlState->flag_rbCtlBusy= false;
-    ctlState->isEnd_shakeHand= false;
-    ctlState->voice_order=-1;
+    initVal();
     //
     PersonDetect_Switch(false);
     VoiceDetect_Switch(false);
     //线程中断
     for(auto thread:rbQthreadList){
         if(thread->isRunning()){
-            thread->quit();
+            thread->terminate();
         }
     }
 
@@ -190,33 +218,46 @@ void StateController::thread_voiceCtl_modeTask_N1() {
 
 void StateController::thread_voiceCtl_modeTask_1() {
     voiceStep=10;
-    rb_msgAndSrv::rb_EmptyAndArray srv;
+    hirop_msgs::connectGripper srv;
     while ((!isStop)&&(voiceStep!=13))
     {
         switch (voiceStep)
         {
             //开启行人检测
             case 10:
+                cout<<"开启行人检测"<<endl;
                 PersonDetect_Switch(true);
                 voiceStep=11;
                 break;
             case 11:
 //                //监听数据
-                rosTopicHd->personDetect_client->call(srv);
+                cout<<"监听数据"<<endl;
+                if(rosTopicHd->personDetect_client->call(srv)){
+
+                } else{
+                    cout<<"服务失败"<<endl;
+                };
+                cout<<"判断结果"<<endl;
                 //检测到行人
-                if(srv.response.data[0]==1)
+                if(srv.response.isConnected)
                 {
+                    cout<<"进入发消息中"<<endl;
+                    std_msgs::String se_msg;
+                    string voice_feedback = "检测到行人!";
+                    se_msg.data = voice_feedback.c_str();
+                    rosTopicHd->voice_order_publisher->publish(se_msg);
+
                     PersonDetect_Switch(false);
                     VoiceDetect_Switch(true);
                     voiceStep=12;
                 }
+                cout<<"判断完毕"<<endl;
                 break;
             case 12:
-                //发出"你好!声音" 发出完毕,关闭行人检测,关闭语音模块
-//                if("检测到"=="声音发出完毕"){
-//                    VoiceDetect_Switch(false);
-//                    voiceStep=13;
-//                }
+                std_msgs::String se_msg;
+                string voice_feedback = "你好!";
+                se_msg.data = voice_feedback.c_str();
+                rosTopicHd->voice_order_publisher->publish(se_msg);
                 voiceStep=13;
                 break;
         }
@@ -238,14 +279,18 @@ void StateController::thread_voiceCtl_modeTask_3() {
                 break;
             case 31:
                 if(ctlState->voice_order==2){
+                    std_msgs::String se_msg;
+                    string voice_feedback = "听到握手指令";
+                    se_msg.data = voice_feedback.c_str();
+                    rosTopicHd->voice_order_publisher->publish(se_msg);
                     voiceStep=32;
-                    //关闭声音检测
-                    VoiceDetect_Switch(false);
                 }
                 if(ctlState->voice_order==3){
+                    std_msgs::String se_msg;
+                    string voice_feedback = "听到抓娃娃指令";
+                    se_msg.data = voice_feedback.c_str();
+                    rosTopicHd->voice_order_publisher->publish(se_msg);
                     voiceStep=33;
-                    //关闭声音检测
-                    VoiceDetect_Switch(false);
                 }
                 break;
         }
@@ -312,10 +357,14 @@ void StateController::thread_voiceCtl_modeTask_4() {
                     msg.data=true;
                     rosTopicHd->shakehandOver_publisher->publish(msg);
                     voiceStep=43;
+
+                    std_msgs::String se_msg;
+                    string voice_feedback = "握手完成,祝您生活愉快!";
+                    se_msg.data = voice_feedback.c_str();
+                    rosTopicHd->voice_order_publisher->publish(se_msg);
                 }
                 break;
         }
-
     }
 }
 
@@ -344,6 +393,10 @@ void StateController::thread_rbGoShakeHandPose() {
 }
 
 void StateController::thread_rbQthread_spin() {
-    lable_showinfo->setText(QString("模式:%1,步序:%2").arg(mode).arg(voiceStep));
+    while (!isStop){
+        cout<<"循环中"<<endl;
+        sleep(1);
+        lable_showinfo->setText(QString("模式:%1,步序:%2").arg(mode).arg(voiceStep));
+    }
 }
 

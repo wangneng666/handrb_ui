@@ -11,6 +11,8 @@ MainWindow::MainWindow(ros::NodeHandle *node, QWidget *parent):BaseWindow(node,p
     initRosToptic();
     //信号与槽绑定
     signalAndSlot();
+
+    stateController->lable_showinfo=lable_tab_voiceDetect_showImg;
 }
 
 MainWindow::~MainWindow() {
@@ -54,6 +56,9 @@ void MainWindow::SysVarInit() {
     ob_node.setparm(this);
     //线程初始化
 
+    rbQthread_devConn = new rbQthread();
+    rbQthread_devConn->setParm(this,&MainWindow::thread_rbQthread_devConn);
+
     rbQthread_beginRun = new rbQthread();
     rbQthread_beginRun->setParm(this,&MainWindow::thread_rbQthread_beginRun);
 
@@ -90,13 +95,15 @@ void MainWindow::SysVarInit() {
     rbQthread_grepwawa = new rbQthread();
     rbQthread_grepwawa->setParm(this,&MainWindow::thread_rbQthread_grepwawa);
 
-    rbQthreadList.push_back(rbQthread_devConnOrRviz);
+    rbQthreadList.push_back(rbQthread_devConn);
     rbQthreadList.push_back(rbQthread_beginRun);
     rbQthreadList.push_back(rbQthread_sysStop);
-    rbQthreadList.push_back(rbQthread_persondeteck);
-    rbQthreadList.push_back(rbQthread_voicedeteck);
-    rbQthreadList.push_back(rbQthread_shakehand);
-    rbQthreadList.push_back(rbQthread_grepwawa);
+//    rbQthreadList.push_back(rbQthread_persondeteck);
+//    rbQthreadList.push_back(rbQthread_voicedeteck);
+//    rbQthreadList.push_back(rbQthread_shakehand);
+//    rbQthreadList.push_back(rbQthread_grepwawa);
+    stateController=new StateController();
+
 }
 
 void MainWindow::initRosToptic(){
@@ -107,14 +114,17 @@ void MainWindow::initRosToptic(){
     impedenceLive_publisher=Node->advertise<std_msgs::Bool>("uipub_impedenceLive",1);
     rbGoHome_publisher=Node->advertise<std_msgs::Int8>("homePoint",1);
     visionDetech_publisher=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
+    voice_order_publisher = Node->advertise<std_msgs::String>("voiceSolve_res", 1);
     camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
     rbCtlBusy_subscriber=Node->subscribe<std_msgs::Bool>("rbCtlBusy_status",1,&MainWindow::callback_rbCtlBusy_status_subscriber, this);
 //    camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
     forceSensor_subscriber=Node->subscribe<geometry_msgs::Wrench>("daq_data", 1000, &MainWindow::callback_forceSensor_subscriber, this);
-
     voiceSolveRes_subcriber=Node->subscribe<std_msgs::Int16>("voice_order",1,&MainWindow::callback_voiceSolveRes_subcriber, this);
+<<<<<<< HEAD
     voice_order_publisher = Node->advertise<std_msgs::String>("voiceSolve_res", 1);
     
+=======
+>>>>>>> 9743df3dc464367ff135c912b096f0b2c0df13cd
     personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
     grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
     robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
@@ -130,6 +140,27 @@ void MainWindow::initRosToptic(){
     rob_goHome_client = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("rob_goHome");
     RobSetMode_client = Node->serviceClient<hsr_rosi_device::setModeSrv>("/set_mode_srv");
     robGetStatus_client = Node->serviceClient<hirop_msgs::robotError>("getRobotErrorFaultMsg");
+    personDetect_client = Node->serviceClient<rb_msgAndSrv::rb_EmptyAndArray>("personDetect_res");
+
+    rosTopicHd.RobReset_client=&RobReset_client;
+    rosTopicHd.RobEnable_client=&RobEnable_client;
+    rosTopicHd.handClaw_gesture_client=&handClaw_gesture_client;
+    rosTopicHd.handClaw_shakeHand_client=&handClaw_shakeHand_client;
+    rosTopicHd.handClaw_grabDoll_client=&handClaw_grabDoll_client;
+    rosTopicHd.rob_goHome_client=&rob_goHome_client;
+    rosTopicHd.RobSetMode_client=&RobSetMode_client;
+    rosTopicHd.robGetStatus_client=&robGetStatus_client;
+    rosTopicHd.personDetect_client=&personDetect_client;
+
+    rosTopicHd.flag_forceSensor_publisher=&flag_forceSensor_publisher;
+    rosTopicHd.shakehandOver_publisher=&shakehandOver_publisher;
+    rosTopicHd.robStatusSend_publisher=&robStatusSend_publisher;
+    rosTopicHd.impedenceLive_publisher=&impedenceLive_publisher;
+    rosTopicHd.rbGoHome_publisher=&rbGoHome_publisher;
+    rosTopicHd.visionDetech_publisher=&visionDetech_publisher;
+    rosTopicHd.voice_order_publisher=&voice_order_publisher;
+
+    stateController->ShareTopicHandle(&rosTopicHd);
 
     pickServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("pick");
     placeServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("place");
@@ -144,6 +175,7 @@ void MainWindow::initRosToptic(){
 void MainWindow::signalAndSlot() {
 /*********************************控件与槽函数绑定*************************************************/
     //主界面
+    connect(btn_tabmain_devConn,&QPushButton::clicked,this,&MainWindow::slot_btn_tabmain_devConn);
     connect(btn_tabmain_beginRun,&QPushButton::clicked,this,&MainWindow::slot_btn_tabmain_beginRun);
     connect(btn_tabmain_sysStop,&QPushButton::clicked,this,&MainWindow::slot_btn_tabmain_sysStop);
     connect(btn_tabmain_sysReset,&QPushButton::clicked,this,&MainWindow::slot_btn_tabmain_sysReset);
@@ -337,7 +369,35 @@ void MainWindow::slot_timer_listen_status() {
         }
     }
 }
-
+//设备连接
+void MainWindow::slot_btn_tabmain_devConn() {
+    if(rbQthread_devConn->isRunning()){
+        emit emitQmessageBox(infoLevel::warning,QString("请不要重复连接设备!"));
+    } else{
+        rbQthread_devConn->start();
+        LOG("RUNINFO")->logInfoMessage("设备开始运行中");
+    }
+}
+//开始连接子线程
+void MainWindow::thread_rbQthread_devConn() {
+    switch (cbox_tabmain_chooseMode->currentIndex()){
+        case 0:
+            emit emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
+            break;
+        case 1:
+            //声音控制模式
+            system("rosrun handrb_ui devConn.sh");
+            //如果复位过程序,增需要重新启动本节点
+//            if(flag_havedReset){ob_node.rebootUiNode();}
+            break;
+        case 2:
+            //按钮控制模式
+            system("rosrun handrb_ui devConn.sh");
+            //如果复位过程序,增需要重新启动本节点
+//            if(flag_havedReset){ob_node.rebootUiNode();}
+            break;
+    }
+}
 //开始运行
 void MainWindow::slot_btn_tabmain_beginRun() {
 
@@ -346,6 +406,34 @@ void MainWindow::slot_btn_tabmain_beginRun() {
     } else{
         rbQthread_beginRun->start();
         LOG("RUNINFO")->logInfoMessage("设备开始运行中");
+    }
+}
+
+//开始运行子线程
+void MainWindow::thread_rbQthread_beginRun() {
+    hsr_rosi_device::ClearFaultSrv srv_clearF;
+    hsr_rosi_device::SetEnableSrv srv2_setE;
+    srv2_setE.request.enable=true;
+    if(!RobErr_Detector.status){
+        RobReset_client.call(srv_clearF);
+    }
+    if(!RobEnable_Detector.status){
+        RobEnable_client.call(srv2_setE);
+    }
+
+    switch (cbox_tabmain_chooseMode->currentIndex()){
+        case 0:
+            emit emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
+            break;
+        case 1:
+            //声音控制模式
+            stateController->start();
+            stateController->isStart= true;
+            break;
+        case 2:
+            //按钮控制模式
+    //    system("rosrun handrb_ui rbCtlMoudle.sh");
+            break;
     }
 }
 
@@ -359,6 +447,25 @@ void MainWindow::slot_btn_tabmain_sysStop() {
         LOG("RUNINFO")->logInfoMessage("设备停止");
     }
 }
+
+//系统停止子线程
+void MainWindow::thread_rbQthread_sysStop() {
+    system((char*)"rosservice call /stop_motion");
+    system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
+    // system("rosservice call /set_mode_srv \"mode: 0\"");
+    hsr_rosi_device::setModeSrv srv;
+    srv.request.mode=0;
+    if(RobSetMode_client.call(srv)){
+        if(srv.response.finsh){
+            emit emitQmessageBox(infoLevel::warning, "模式设置为点动模式!");
+        }
+    }else
+    {
+        emit emitQmessageBox(infoLevel::warning, "模式设置服务连接失败!");
+    }
+    system((char*)"rostopic pub -1 /stop_move std_msgs/Bool \"data: true\"");
+}
+
 //系统复位 goto 等5s定时重启
 void MainWindow::slot_btn_tabmain_sysReset() {
 //    Timer_forAutoRunShakeHand->stop();
@@ -367,13 +474,18 @@ void MainWindow::slot_btn_tabmain_sysReset() {
 //    } else{
 //        rbQthread_sysReset->start();
 //    }
-
+        for(auto thread:rbQthreadList){
+             if(thread->isRunning()){
+                 thread->terminate();
+                 cout<<"释放线程资源"<<endl;
+             }
+         }
             //开辟临时线程
         rbQthread* tmp_thread=new rbQthread();
         tmp_thread->setParm4([&]
         {
         Timer_forAutoRunShakeHand->stop();
-         flag_havedReset= true;
+//         flag_havedReset= true;
         system("rosnode kill $(rosnode list |grep -v handrb_ui)");
         }
         );
@@ -401,84 +513,9 @@ void MainWindow::slot_btn_tabmain_sysReset() {
 //        //         cout<<"释放线程资源"<<endl;
 //        //     }
 //        // }
-//
-//        //启动复位线程,此线程可重复使用
-////        rbQthread_sysReset->start();
-//        //开辟临时线程
-//        rbQthread* tmp_thread=new rbQthread();
-//        tmp_thread->setParm4([&]
-//        {
-//         flag_havedReset= true;
-//         ob_node.shutdownNode();
-//         system("rosnode kill -a");
-//         sleep(1);
-//         system("killall rosmaster");
-//         sleep(1);
-//         system("roscore");
-//        }
-//        );
-//        //5s后复位按钮才能再次使用
-//        connect(tmp_thread,SIGNAL(started()),this,SLOT(slot_rbQthread_listenSysResetStart()));
-//        connect(tmp_thread,SIGNAL(finished()),tmp_thread,SLOT(deleteLater()));
-//        connect(tmp_thread,SIGNAL(finished()),this,SLOT(slot_rbQthread_listenFinish()));
-//        tmp_thread->start();
-//        LOG("RUNINFO")->logInfoMessage("系统复位");
-//
-//    }
 }
 
 
-//开始运行子线程
-void MainWindow::thread_rbQthread_beginRun() {
-    switch (cbox_tabmain_chooseMode->currentIndex()){
-        case 0:
-            emit emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
-            break;
-        case 1:
-            //启动真机运行launch文件
-           //system((const char*)"roslaunch handrb_ui devconn.launch");
-            system("rosrun handrb_ui devConn.sh");
-
-//            system("roslaunch handrb_ui handRobotGrab.launch");
-            //如果复位过程序,增需要重新启动本节点
-            if(flag_havedReset){ob_node.rebootUiNode();}
-            break;
-        case 2:
-            //启动rviz程序
-            //如果复位过程序,增需要重新启动本节点
-            if(flag_havedReset){ob_node.rebootUiNode();}
-            system("rosrun handrb_ui devConn.sh");
-
-            //system("roslaunch handrb_ui devconn.launch");
-            //启动rviz文件运行文件
-            break;
-    }
-}
-//系统停止子线程
-void MainWindow::thread_rbQthread_sysStop() {
-    system((char*)"rosservice call /stop_motion");
-    system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
-    // system("rosservice call /set_mode_srv \"mode: 0\"");
-    hsr_rosi_device::setModeSrv srv;
-    srv.request.mode=0;
-    if(RobSetMode_client.call(srv)){
-        if(srv.response.finsh){
-            emit emitQmessageBox(infoLevel::warning, "模式设置为点动模式!");
-        }
-    }else
-    {
-        emit emitQmessageBox(infoLevel::warning, "模式设置服务连接失败!");
-    }
-    system((char*)"rostopic pub -1 /stop_move std_msgs/Bool \"data: true\"");
-
-
-    // hsr_rosi_device::SetEnableSrv srv;
-    // srv.request.enable= false;
-    // if(RobEnable_client.call(srv)){
-    // } else{
-    //     emit emitQmessageBox(infoLevel ::warning,"机器人掉使能服务连接失败");
-    // }
-}
 //系统复位子线程
 void MainWindow::thread_rbQthread_sysReset() {
     system("rosnode kill $(rosnode list |grep -v handrb_ui)");
@@ -651,16 +688,19 @@ void MainWindow::slot_combox_chooseMode_Clicked(int index) {
             btn_tabmain_beginRun->setEnabled(false);
             btn_tabmain_sysStop->setEnabled(false);
             btn_tabmain_sysReset->setEnabled(false);
+            btn_tabmain_devConn->setEnabled(false);
             break;
         case 1:
             btn_tabmain_beginRun->setEnabled(true);
             btn_tabmain_sysStop->setEnabled(true);
             btn_tabmain_sysReset->setEnabled(true);
+            btn_tabmain_devConn->setEnabled(true);
             break;
         case 2:
             btn_tabmain_beginRun->setEnabled(true);
             btn_tabmain_sysStop->setEnabled(true);
             btn_tabmain_sysReset->setEnabled(true);
+            btn_tabmain_devConn->setEnabled(true);
             break;
     }
 }
@@ -668,100 +708,101 @@ void MainWindow::slot_combox_chooseMode_Clicked(int index) {
 
 void MainWindow::callback_voiceSolveRes_subcriber(const std_msgs::Int16::ConstPtr& msg) {
 //    label_tabfunc_voiceValue->setText(QString("当前语音识别结果:")+QString::fromStdString(msg.data));
-    int voice_order = msg->data;
-    string voice_feedback;
     std_msgs::String se_msg;
-
-    //收到上使能语音指令
-    if (voice_order == 0)
-    {
-        if (RobConn_Detector.status == true)
-        {
-            //调用上使能按钮
-            voice_feedback = "机器人上使能成功";
-            se_msg.data = voice_feedback.c_str();
-            voice_order_publisher.publish(se_msg);
-        }
-        else
-        {
-            voice_feedback = "机器人上使能失败，请重启设备连接";
-            se_msg.data = voice_feedback.c_str();
-            voice_order_publisher.publish(se_msg);
-        }
-
-    }
-
-    //收到下使能语音指令
-    if (voice_order == 1)
-    {
-        if (RobConn_Detector.status == true)
-        {
-            //调用下使能按钮
-            voice_feedback = "机器人下使能成功";
-            se_msg.data = voice_feedback.c_str();
-            voice_order_publisher.publish(se_msg);
-        }
-        else
-        {
-            voice_feedback = "机器人下使能失败，请重启设备连接";
-            se_msg.data = voice_feedback.c_str();
-            voice_order_publisher.publish(se_msg);
-        }
-    }
-
-    //收到握手语音指令
-    if (voice_order == 2)
-    {
-        if ((flag_rbEnable&&flag_rbCtlStartUp)== true)
-        {
-            //调用握手按钮
-            voice_feedback = "再见，祝你生活愉快";
-            se_msg.data = voice_feedback.c_str();
-            voice_order_publisher.publish(se_msg);
-        }
-        else
-        {
-            voice_feedback = "抱歉，机器人此时无法进行握手操作";
-            se_msg.data = voice_feedback.c_str();
-            voice_order_publisher.publish(se_msg);
-        }
-    }
-
-    //收到抓娃娃语音指令
-    if (voice_order == 3)
-    {
-        if ((flag_rbEnable&&flag_rbCtlStartUp) == true)
-        {
-            //调用握手按钮
-            voice_feedback = "给，你要的娃娃，祝你生活愉快";
-            se_msg.data = voice_feedback.c_str();
-            voice_order_publisher.publish(se_msg);
-        }
-        else
-        {
-            voice_feedback = "抱歉，机器人此时无法进行抓娃娃操作";
-            se_msg.data = voice_feedback.c_str();
-            voice_order_publisher.publish(se_msg);
-        }
-    }
-
-    //收到回原点语音指令
-    if (voice_order == 6)
-    {
-        if ((flag_rbEnable&&flag_rbCtlStartUp) == true)
-        {
-            //调用回原点按钮
-            voice_feedback = "机器人已回原点";
-            se_msg.data = voice_feedback.c_str();
-            voice_order_publisher.publish(se_msg);
-        }
-        else
-        {
-            voice_feedback = "抱歉，机器人状态出现故障";
-            se_msg.data = voice_feedback.c_str();
-            voice_order_publisher.publish(se_msg);
-        }
-    }
+    ctrlState.voice_order= msg->data;
+//    string voice_feedback;
+//    int voice_order = msg->data;
+//    //收到上使能语音指令
+//    if (voice_order == 0)
+//    {
+//        if (RobConn_Detector.status == true)
+//        {
+//            //调用上使能按钮
+//            voice_feedback = "机器人上使能成功";
+//            se_msg.data = voice_feedback.c_str();
+//            voice_order_publisher.publish(se_msg);
+//        }
+//        else
+//        {
+//            voice_feedback = "机器人上使能失败，请重启设备连接";
+//            se_msg.data = voice_feedback.c_str();
+//            voice_order_publisher.publish(se_msg);
+//        }
+//
+//    }
+//
+//    //收到下使能语音指令
+//    if (voice_order == 1)
+//    {
+//        if (RobConn_Detector.status == true)
+//        {
+//            //调用下使能按钮
+//            voice_feedback = "机器人下使能成功";
+//            se_msg.data = voice_feedback.c_str();
+//            voice_order_publisher.publish(se_msg);
+//        }
+//        else
+//        {
+//            voice_feedback = "机器人下使能失败，请重启设备连接";
+//            se_msg.data = voice_feedback.c_str();
+//            voice_order_publisher.publish(se_msg);
+//        }
+//    }
+//
+//    //收到握手语音指令
+//    if (voice_order == 2)
+//    {
+//        if ((flag_rbEnable&&flag_rbCtlStartUp)== true)
+//        {
+//            //调用握手按钮
+//            voice_feedback = "再见，祝你生活愉快";
+//            se_msg.data = voice_feedback.c_str();
+//            voice_order_publisher.publish(se_msg);
+//        }
+//        else
+//        {
+//            voice_feedback = "抱歉，机器人此时无法进行握手操作";
+//            se_msg.data = voice_feedback.c_str();
+//            voice_order_publisher.publish(se_msg);
+//        }
+//    }
+//
+//    //收到抓娃娃语音指令
+//    if (voice_order == 3)
+//    {
+//        if ((flag_rbEnable&&flag_rbCtlStartUp) == true)
+//        {
+//            //调用握手按钮
+//            voice_feedback = "给，你要的娃娃，祝你生活愉快";
+//            se_msg.data = voice_feedback.c_str();
+//            voice_order_publisher.publish(se_msg);
+//        }
+//        else
+//        {
+//            voice_feedback = "抱歉，机器人此时无法进行抓娃娃操作";
+//            se_msg.data = voice_feedback.c_str();
+//            voice_order_publisher.publish(se_msg);
+//        }
+//    }
+//
+//    //收到回原点语音指令
+//    if (voice_order == 6)
+//    {
+//        if ((flag_rbEnable&&flag_rbCtlStartUp) == true)
+//        {
+//            //调用回原点按钮
+//            voice_feedback = "机器人已回原点";
+//            se_msg.data = voice_feedback.c_str();
+//            voice_order_publisher.publish(se_msg);
+//        }
+//        else
+//        {
+//            voice_feedback = "抱歉，机器人状态出现故障";
+//            se_msg.data = voice_feedback.c_str();
+//            voice_order_publisher.publish(se_msg);
+//        }
+//    }
+    stateController->updateState(&ctrlState);
 }
 //
 void MainWindow::callback_personDetectRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
@@ -789,21 +830,30 @@ void MainWindow::callback_grabDollImagRes_subcriber(const sensor_msgs::Image::Co
 }
 
 void MainWindow::callback_robStatus_subscriber(const industrial_msgs::RobotStatus::ConstPtr robot_status) {
+
     mutex_devDetector.lock();
     RobConn_Detector.lifeNum=100;
     RobConn_Detector.status= true;
     if(robot_status->in_error.val==0){
         RobErr_Detector.lifeNum=100;
         RobErr_Detector.status= true;
+
+        ctrlState.RobNormalState= true;
     } else{
         RobErr_Detector.status= false;
+
+        ctrlState.RobNormalState= false;
     }
     if(robot_status->drives_powered.val==1){
         RobEnable_Detector.lifeNum=100;
         RobEnable_Detector.status= true;
+
+        ctrlState.RobEnableState= true;
     } else{
         RobEnable_Detector.status= false;
+        ctrlState.RobEnableState= false;
     }
+    stateController->updateState(&ctrlState);
     mutex_devDetector.unlock();
 }
 
@@ -1194,9 +1244,13 @@ void MainWindow::callback_rbCtlBusy_status_subscriber(std_msgs::Bool msg) {
     //机器人控制模块运动中
     if(msg.data){
         flag_rbCtlBusy= true;
-    } else{
-        flag_rbCtlBusy= false;
+        ctrlState.flag_rbCtlBusy= true;
     }
+     else{
+        flag_rbCtlBusy= false;
+        ctrlState.flag_rbCtlBusy= false;
+    }
+    stateController->updateState(&ctrlState);
 }
 
 bool MainWindow::sendSignal_RbPreparePose() {
@@ -1262,18 +1316,36 @@ void MainWindow::thread_rbQthread_LisionRbErrInfo() {
  * 
  */
 void MainWindow::slot_btn_tabShakeHand_shakeHandEnd() {
+<<<<<<< HEAD
 
     if(rbQthread_rbImpMoudlePrepare->isRunning()){
+=======
+    switch (cbox_tabmain_chooseMode->currentIndex()){
+        case 0:
+            emit emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
+            break;
+        case 1:
+            //声音控制模式
+            ctrlState.isEnd_shakeHand= true;
+            stateController->updateState(&ctrlState);
+            break;
+        case 2:
+            //按钮控制模式
+            if(rbQthread_rbImpMoudlePrepare->isRunning()){
+>>>>>>> 9743df3dc464367ff135c912b096f0b2c0df13cd
 
-        system((char*)"rosservice call /stop_motion");
-        system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
+                system((char*)"rosservice call /stop_motion");
+                system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
+            }
+            hsr_rosi_device::setModeSrv srv;
+            srv.request.mode=0;
+            RobSetMode_client.call(srv);
+            std_msgs::Bool msg;
+            msg.data=true;
+            shakehandOver_publisher.publish(msg);
+            break;
     }
-    hsr_rosi_device::setModeSrv srv;
-    srv.request.mode=0;
-    RobSetMode_client.call(srv);
-    std_msgs::Bool msg;
-    msg.data=true;
-    shakehandOver_publisher.publish(msg);
+
 }
 
 void MainWindow::slot_btn_tab_voiceDetect_run() {
@@ -1365,7 +1437,9 @@ void MainWindow::slot_btn_tabShakeHand_AutoRun() {
 }
 
 void MainWindow::callback_isOpenFollow_subscriber(std_msgs::Bool msg) {
-        flag_robPreparePose=msg.data;
+    flag_robPreparePose=msg.data;
+    ctrlState.isOk_robPreparePose=flag_robPreparePose;
+    stateController->updateState(&ctrlState);
 }
 
 void MainWindow::slot_btn_startSensor() {

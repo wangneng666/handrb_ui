@@ -112,6 +112,7 @@ public:
     QHBoxLayout *hLayout_tabmain_3;
     QGroupBox *groupBox_tabmain_3;
     QHBoxLayout *horizontalLayout_7;
+    QPushButton *btn_tabmain_devConn;
     QPushButton *btn_tabmain_beginRun;
     QPushButton *btn_tabmain_sysStop;
     QPushButton *btn_tabmain_sysReset;

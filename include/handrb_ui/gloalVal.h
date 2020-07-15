@@ -30,6 +30,8 @@ struct rosTopicHandle{
     ros::ServiceClient* RobSetMode_client;
     ros::ServiceClient* robGetStatus_client;
     ros::ServiceClient* personDetect_client;
+    ros::ServiceClient* switch_personDetect_client;
+    ros::ServiceClient* switch_voiceDetect_client;
 
     ros::Publisher* voice_order_publisher;
     ros::Publisher* visionDetech_publisher;
@@ -38,6 +40,7 @@ struct rosTopicHandle{
     ros::Publisher* impedenceLive_publisher;
     ros::Publisher* shakehandOver_publisher;
     ros::Publisher* robStatusSend_publisher;
+    ros::Publisher* robSpeedSet_publisher;
 };
 #endif
 

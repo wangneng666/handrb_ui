@@ -19,7 +19,8 @@
 #include "std_msgs/Bool.h"
 #include "std_msgs/Int8.h"
 #include "std_msgs/Int16.h"
-#include "rb_msgAndSrv/rb_DoubleBool.h" //"open_visiondetect"
+#include "std_msgs/Float32.h"
+#include "rb_msgAndSrv/rb_DoubleBool.h"
 #include "rb_msgAndSrv/rb_string.h"
 #include "sensor_msgs/Image.h"
 #include <cv_bridge/cv_bridge.h>
@@ -32,6 +33,7 @@
 #include "hirop_msgs/detection.h"
 #include "hirop_msgs/ObjectArray.h"
 #include "industrial_msgs/StopMotion.h"
+#include "rb_msgAndSrv/rb_EmptyAndInt.h"
 
 //标准库
 #include "ros/ros.h"
@@ -124,6 +126,8 @@ private:
     ros::ServiceClient pickServer_client;
     ros::ServiceClient placeServer_client;
     ros::ServiceClient personDetect_client;
+    ros::ServiceClient switch_personDetect_client;
+    ros::ServiceClient switch_voiceDetect_client;
 
     ros::Subscriber voiceSolveRes_subcriber;
     ros::Subscriber personDetectRes_subcriber;
@@ -145,6 +149,7 @@ private:
     ros::Publisher impedenceLive_publisher;
     ros::Publisher shakehandOver_publisher;
     ros::Publisher robStatusSend_publisher;
+    ros::Publisher robSpeedSet_publisher;
     //线程句柄
     vector<rbQthread*> rbQthreadList;
     rbQthread* rbQthread_devConn;

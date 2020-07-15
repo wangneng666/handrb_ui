@@ -1064,7 +1064,7 @@ void BaseWindow::retranslateUi(QMainWindow *MainWindow) {
 
     label_tab_voiceMonitor_2->setText(QApplication::translate("MainWindow", "图片", nullptr));
     label_tab_voiceMonitor_1->setText(QApplication::translate("MainWindow", "模式[]:,步序[]", nullptr));
-    tabWidget->setTabText(tabWidget->indexOf(tab_voiceMonitor), QApplication::translate("MainWindow", "\350\257\255\351\237\263\346\216\247\345\210\266\347\233\221\346\216\247\351\241\265\351\235\242", nullptr));
+    tabWidget->setTabText(tabWidget->indexOf(tab_voiceMonitor), QApplication::translate("MainWindow", "自动模式监控", nullptr));
 
 
     gBox_tabShakeHand_status->setTitle(QApplication::translate("MainWindow", "\345\207\206\345\244\207\347\212\266\346\200\201", nullptr));

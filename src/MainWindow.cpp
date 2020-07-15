@@ -118,6 +118,7 @@ void MainWindow::initRosToptic(){
     rbGoHome_publisher=Node->advertise<std_msgs::Int8>("homePoint",1);
     visionDetech_publisher=Node->advertise<std_msgs::Bool>("switch_of_vision_detect",1000);
     voice_order_publisher = Node->advertise<std_msgs::String>("voiceSolve_res", 1);
+    robSpeedSet_publisher = Node->advertise<std_msgs::Float32>("speedScale", 1);
     camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
     rbCtlBusy_subscriber=Node->subscribe<std_msgs::Bool>("rbCtlBusy_status",1,&MainWindow::callback_rbCtlBusy_status_subscriber, this);
 //    camera_subscriber=Node->subscribe<sensor_msgs::Image>("/usb_cam/image_raw",1,boost::bind(&MainWindow::callback_camera_subscriber, this, _1));
@@ -141,7 +142,12 @@ void MainWindow::initRosToptic(){
     rob_goHome_client = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("rob_goHome");
     RobSetMode_client = Node->serviceClient<hsr_rosi_device::setModeSrv>("/set_mode_srv");
     robGetStatus_client = Node->serviceClient<hirop_msgs::robotError>("getRobotErrorFaultMsg");
-    personDetect_client = Node->serviceClient<hirop_msgs::connectGripper>("personDetect_res");
+    personDetect_client = Node->serviceClient<rb_msgAndSrv::rb_EmptyAndInt>("personDetect_res");
+
+    //开关语音检测与图像检测
+    switch_personDetect_client=Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("switch_personDetect");
+    switch_voiceDetect_client=Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("switch_voiceDetect");
+
 
     rosTopicHd.RobReset_client=&RobReset_client;
     rosTopicHd.RobEnable_client=&RobEnable_client;
@@ -152,6 +158,8 @@ void MainWindow::initRosToptic(){
     rosTopicHd.RobSetMode_client=&RobSetMode_client;
     rosTopicHd.robGetStatus_client=&robGetStatus_client;
     rosTopicHd.personDetect_client=&personDetect_client;
+    rosTopicHd.switch_personDetect_client=&switch_personDetect_client;
+    rosTopicHd.switch_voiceDetect_client=&switch_voiceDetect_client;
 
     rosTopicHd.flag_forceSensor_publisher=&flag_forceSensor_publisher;
     rosTopicHd.shakehandOver_publisher=&shakehandOver_publisher;
@@ -160,13 +168,14 @@ void MainWindow::initRosToptic(){
     rosTopicHd.rbGoHome_publisher=&rbGoHome_publisher;
     rosTopicHd.visionDetech_publisher=&visionDetech_publisher;
     rosTopicHd.voice_order_publisher=&voice_order_publisher;
+    rosTopicHd.robSpeedSet_publisher=&robSpeedSet_publisher;
 
     stateController->ShareTopicHandle(&rosTopicHd);
 
     pickServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("pick");
     placeServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("place");
 
-    // zhua wa wa
+    //抓娃娃
    detectionClient = Node->serviceClient<hirop_msgs::detection>("/detection");
    // 订阅
    objectArraySub = Node->subscribe<hirop_msgs::ObjectArray>("object_array", 1, &MainWindow::callback_objectCallBack, this);
@@ -323,17 +332,6 @@ void MainWindow::slot_timer_listen_status() {
             RobSetMode_client.call(srv);
         }
     }
-//    else
-//    {
-//        if(!Holdflag_RobSetMode)
-//        {
-//            cout<<"调用了"<<endl;
-//            system("rosservice call /stop_motion");
-//            srv.request.mode=0;
-//            RobSetMode_client.call(srv);
-//            Holdflag_RobSetMode=true;
-//        }
-//    }
 
     std_msgs::Bool rb_msg;
     if(RobErr_Detector.status){
@@ -428,8 +426,12 @@ void MainWindow::thread_rbQthread_beginRun() {
             break;
         case 1:
             //声音控制模式
-            stateController->start();
-            stateController->isStart= true;
+            if(!stateController->isRunning){
+                stateController->start();
+                stateController->isStart= true;
+            } else{
+                emit emitQmessageBox(infoLevel::information,QString("总控系统正在运行中，请不要重复运行!"));
+            }
             break;
         case 2:
             //按钮控制模式
@@ -619,7 +621,7 @@ void MainWindow::callback_getShakeResult_subscriber(std_msgs::Int16 msg){
     if(ret == 0){
         ctrlState.isEnd_shakeHand= true;
         stateController->updateState(&ctrlState);
-//        slot_btn_tabShakeHand_shakeHandEnd();
+        slot_btn_tabShakeHand_shakeHandEnd();
 //        impedenceLive_publisher.publish(false);
     }
 }
@@ -1369,19 +1371,20 @@ void MainWindow::slot_btn_tabShakeHand_shakeHandEnd()
             emit emitQmessageBox(infoLevel::information,QString("请选择运行模式!"));
             break;
         case 1:
-            //声音控制模式
+            //自动控制模式
             ctrlState.isEnd_shakeHand= true;
             stateController->updateState(&ctrlState);
             break;
         case 2:
             //按钮控制模式
+            hsr_rosi_device::setModeSrv srv;
+            srv.request.mode=0;
+            RobSetMode_client.call(srv);
+
             if(rbQthread_rbImpMoudlePrepare->isRunning()){
                 system((char*)"rosservice call /stop_motion");
                 system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
             }
-            hsr_rosi_device::setModeSrv srv;
-            srv.request.mode=0;
-            RobSetMode_client.call(srv);
             std_msgs::Bool msg;
             msg.data=true;
             shakehandOver_publisher.publish(msg);
@@ -1425,6 +1428,7 @@ void MainWindow::AutoRun_GrabToy() {
     //1.启动机器人控制模块
 
     //2.执行抓娃娃命令
+
 }
 
 //握手功能一键执行
@@ -1557,7 +1561,3 @@ bool MainWindow::transformFrame(geometry_msgs::PoseStamped& poseStamped, std::st
     }
 }
 
-
-//rosservice call /clear_robot_fault "{}"
-//rosservice call /set_mode_srv "mode: 1"
-//rosservice call /set_robot_enable "enable: true"

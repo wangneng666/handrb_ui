@@ -49,12 +49,12 @@ void StateController::initVal(){
     mode=0;
     subStep=0;
     assist_funcRunOnce= false;
-    for(auto thread:rbQthreadList){
-        if(thread->isRunning()){
-            thread->terminate();
-            cout<<"释放线程"<<endl;
-        }
-    }
+    // for(auto thread:rbQthreadList){
+    //     if(thread->isRunning()){
+    //         thread->terminate();
+    //         cout<<"释放线程"<<endl;
+    //     }
+    // }
 }
 
 void StateController::start() {
@@ -119,7 +119,7 @@ void StateController::voiceCtl_AutoRun() {
             //模式:2(行人减速设置模式)
             case 2:
                 //设置减速比例
-                setRobSpeed(0.1);
+                // setRobSpeed(0.1);
                 mode=3;
                 plainTextEdit->appendPlainText("进入模式3,语音选择功能");
                 break;
@@ -276,7 +276,7 @@ void StateController::thread_voiceCtl_modeTask_1() {
                 break;
             case 12:
                 //发出声音
-                RobSayWords("你好，我可以和你做朋友吗");
+                RobSayWords("我可以和你做朋友吗");
                 subStep=13;
                 break;
         }
@@ -316,6 +316,8 @@ void StateController::thread_voiceCtl_modeTask_3() {
 //握手任务子线程
 void StateController::thread_voiceCtl_modeTask_4() {
     subStep=40;
+    std_msgs::Bool msg;
+    msg.data=true;
     while ((!isStop)&&(!sub_isStop)&&(subStep!=43))
     {
         switch (subStep){
@@ -362,10 +364,9 @@ void StateController::thread_voiceCtl_modeTask_4() {
                 if(ctlState->isEnd_shakeHand){
                     //关闭阻抗
                     closeImpedence();
+                    sleep(1);
                     //给机器人控制模块发送握手结束信号
-                    std_msgs::Bool msg;
-                    msg.data=true;
-                    rosTopicHd->shakehandOver_publisher->publish(msg);
+                    rosTopicHd->impedenceLive_publisher->publish(msg);
                     RobSayWords("祝您生活愉快,再见!");
                     subStep=43;
                 }
@@ -439,7 +440,7 @@ void StateController::thread_rbQthread_spin() {
 }
 
 void StateController::thread_timerFor10s(){
-    sleep(10);
+    sleep(30);
 }
 
 //说话
@@ -451,6 +452,7 @@ void StateController::RobSayWords(std::string words) {
 
 //关闭阻抗
 void StateController::closeImpedence() {
+    cout<<"关闭阻抗"<<endl;
     hsr_rosi_device::setModeSrv srv_SetMode;
     srv_SetMode.request.mode=0;
     if(rosTopicHd->RobSetMode_client->call(srv_SetMode)){
@@ -459,13 +461,13 @@ void StateController::closeImpedence() {
     {
         cout<<"模式设置服务连接失败"<<endl;
     }
-    system((char*)"rosservice call /stop_motion");
-    system("rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
-    system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
+    //system((char*)"rosservice call /stop_motion");
+     system("rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
 }
 
 //开启阻抗
 void StateController::startImpedence() {
+    cout<<"开启阻抗"<<endl;
     hsr_rosi_device::setModeSrv srv_SetMode;
     //设置随动模式
     srv_SetMode.request.mode = 1;

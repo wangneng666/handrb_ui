@@ -142,7 +142,7 @@ void MainWindow::initRosToptic(){
     rob_goHome_client = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("rob_goHome");
     RobSetMode_client = Node->serviceClient<hsr_rosi_device::setModeSrv>("/set_mode_srv");
     robGetStatus_client = Node->serviceClient<hirop_msgs::robotError>("getRobotErrorFaultMsg");
-    personDetect_client = Node->serviceClient<rb_msgAndSrv::rb_EmptyAndInt>("personDetect_res");
+    personDetect_client = Node->serviceClient<rb_msgAndSrv::rb_EmptyAndInt>("get_people_track_state");
 
     //开关语音检测与图像检测
     switch_personDetect_client=Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("switch_personDetect");
@@ -490,7 +490,10 @@ void MainWindow::slot_btn_tabmain_sysReset() {
         {
         Timer_forAutoRunShakeHand->stop();
 //         flag_havedReset= true;
+        system("rosrun openni2_tracker voice_shutdown.sh");
+        system("rosrun openni2_tracker vision_shutdown.sh");
         system("rosnode kill $(rosnode list |grep -v handrb_ui)");
+        
         }
         );
         //5s后复位按钮才能再次使用
@@ -618,10 +621,20 @@ void MainWindow::slot_btn_rbGoHomePose() {
 void MainWindow::callback_getShakeResult_subscriber(std_msgs::Int16 msg){
     std::cout << "get ShakeReult :"<< msg.data<<std::endl;
     int ret = msg.data;
-    if(ret == 0){
-        ctrlState.isEnd_shakeHand= true;
-        stateController->updateState(&ctrlState);
-        slot_btn_tabShakeHand_shakeHandEnd();
+    if(ret == 0)
+    {     
+        switch (cbox_tabmain_chooseMode->currentIndex())
+            {
+                case 1:
+                    ctrlState.isEnd_shakeHand= true;
+                    stateController->updateState(&ctrlState);
+                    break;
+                case 2:
+                    slot_btn_tabShakeHand_shakeHandEnd();
+                    break;
+        
+            }
+        // slot_btn_tabShakeHand_shakeHandEnd();
 //        impedenceLive_publisher.publish(false);
     }
 }
@@ -709,6 +722,9 @@ void MainWindow::callback_voiceSolveRes_subcriber(const std_msgs::Int16::ConstPt
 //    label_tabfunc_voiceValue->setText(QString("当前语音识别结果:")+QString::fromStdString(msg.data));
     std_msgs::String se_msg;
     ctrlState.voice_order= msg->data;
+    stateController->updateState(&ctrlState);
+    cout<<"收到指令:"<<msg->data<<endl;
+
 //    string voice_feedback;
 //    int voice_order = msg->data;
 //    //收到上使能语音指令
@@ -801,19 +817,19 @@ void MainWindow::callback_voiceSolveRes_subcriber(const std_msgs::Int16::ConstPt
 //            voice_order_publisher.publish(se_msg);
 //        }
 //    }
-    stateController->updateState(&ctrlState);
+
 }
 //
 void MainWindow::callback_personDetectRes_subcriber(const sensor_msgs::Image::ConstPtr& msg) {
     //如果标志为关闭行人检测
-    if(!flag_switchPersonDecBtnText){
-        return;
-    }
+    // if(!flag_switchPersonDecBtnText){
+    //     return;
+    // }
     const cv_bridge::CvImageConstPtr &ptr = cv_bridge::toCvShare(msg, "bgr8");
     cv::Mat mat = ptr->image;
     QImage qimage = cvMat2QImage(mat);
     QPixmap tmp_pixmap = QPixmap::fromImage(qimage);
-    QPixmap new_pixmap = tmp_pixmap.scaled(label_tab_personDetect_showImag->width(), label_tab_personDetect_showImag->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
+    QPixmap new_pixmap = tmp_pixmap.scaled(label_tab_voiceMonitor_2->width(), label_tab_voiceMonitor_2->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);  // 饱满填充
 //    QPixmap tmp_pixmap = pixmap1.scaled(label_picture1->width(), label_picture1->height(), Qt::KeepAspectRatio, Qt::SmoothTransformation);  // 按比例缩放
     label_tab_personDetect_showImag->setPixmap(new_pixmap);
     label_tab_voiceMonitor_2->setPixmap(new_pixmap);
@@ -1382,6 +1398,7 @@ void MainWindow::slot_btn_tabShakeHand_shakeHandEnd()
             RobSetMode_client.call(srv);
 
             if(rbQthread_rbImpMoudlePrepare->isRunning()){
+                cout<<"执行停止"<<endl;
                 system((char*)"rosservice call /stop_motion");
                 system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
             }

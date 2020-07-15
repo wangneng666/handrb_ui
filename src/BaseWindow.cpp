@@ -1064,6 +1064,7 @@ void BaseWindow::retranslateUi(QMainWindow *MainWindow) {
 
     label_tab_voiceMonitor_2->setText(QApplication::translate("MainWindow", "图片", nullptr));
     label_tab_voiceMonitor_1->setText(QApplication::translate("MainWindow", "模式[]:,步序[]", nullptr));
+    label_tab_voiceMonitor_2->setFixedSize(512,424);
     tabWidget->setTabText(tabWidget->indexOf(tab_voiceMonitor), QApplication::translate("MainWindow", "自动模式监控", nullptr));
 
 

@@ -148,6 +148,15 @@ void MainWindow::initRosToptic(){
     switch_personDetect_client=Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("switch_personDetect");
     switch_voiceDetect_client=Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("switch_voiceDetect");
 
+    backHomeClient = Node->serviceClient<std_srvs::Empty>("/back_home");
+    detectePointClient = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("/handClaw_detectDoll");
+    stopMotionClient = Node->serviceClient<industrial_msgs::StopMotion>("/stop_motion");
+    //抓娃娃
+    detectionClient = Node->serviceClient<hirop_msgs::detection>("/detection");
+    // 订阅
+    objectArraySub = Node->subscribe<hirop_msgs::ObjectArray>("object_array", 1, &MainWindow::callback_objectCallBack, this);
+    pickServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("pick");
+    placeServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("place");
 
     rosTopicHd.RobReset_client=&RobReset_client;
     rosTopicHd.RobEnable_client=&RobEnable_client;
@@ -160,6 +169,10 @@ void MainWindow::initRosToptic(){
     rosTopicHd.personDetect_client=&personDetect_client;
     rosTopicHd.switch_personDetect_client=&switch_personDetect_client;
     rosTopicHd.switch_voiceDetect_client=&switch_voiceDetect_client;
+    rosTopicHd.backHomeClient=&backHomeClient;
+    rosTopicHd.detectePointClient=&detectePointClient;
+    rosTopicHd.stopMotionClient=&stopMotionClient;
+    rosTopicHd.detectionClient=&detectionClient;
 
     rosTopicHd.flag_forceSensor_publisher=&flag_forceSensor_publisher;
     rosTopicHd.shakehandOver_publisher=&shakehandOver_publisher;
@@ -171,14 +184,6 @@ void MainWindow::initRosToptic(){
     rosTopicHd.robSpeedSet_publisher=&robSpeedSet_publisher;
 
     stateController->ShareTopicHandle(&rosTopicHd);
-
-    pickServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("pick");
-    placeServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("place");
-
-    //抓娃娃
-   detectionClient = Node->serviceClient<hirop_msgs::detection>("/detection");
-   // 订阅
-   objectArraySub = Node->subscribe<hirop_msgs::ObjectArray>("object_array", 1, &MainWindow::callback_objectCallBack, this);
 
 }
 
@@ -1188,8 +1193,6 @@ void MainWindow::slot_btn_tabgrabToy_stop() {
 //    } else {
 //        rbQthread_sysStop->start();
 //    }
-    ros::ServiceClient backHomeClient = Node->serviceClient<std_srvs::Empty>("/back_home");
-    ros::ServiceClient detectePointClient = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("/handClaw_detectDoll");
     std_srvs::Empty srv;
     if(!backHomeClient.call(srv))
     {
@@ -1221,7 +1224,6 @@ void MainWindow::slot_btn_tabgrabToy_stop() {
 }
 
 void MainWindow::slot_btn_tabgrabToy_close() {
-    ros::ServiceClient stopMotionClient = Node->serviceClient<industrial_msgs::StopMotion>("/stop_motion");
     industrial_msgs::StopMotion srv;
     if(stopMotionClient.call(srv))
     {

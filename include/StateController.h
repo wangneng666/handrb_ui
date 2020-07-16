@@ -150,6 +150,16 @@ public:
      */
      void startImpedence();
 
+     /***
+      * 机器人抓娃娃去到拍照点
+      */
+     bool rb_grabToy_goPhotoPose();
+
+     /***
+      * 机器人执行抓娃娃动作
+      */
+     bool rb_grabToy_detectAndGrab();
+
 };
 
 

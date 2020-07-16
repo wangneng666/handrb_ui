@@ -32,6 +32,10 @@ struct rosTopicHandle{
     ros::ServiceClient* personDetect_client;
     ros::ServiceClient* switch_personDetect_client;
     ros::ServiceClient* switch_voiceDetect_client;
+    ros::ServiceClient* backHomeClient ;
+    ros::ServiceClient* detectePointClient;
+    ros::ServiceClient* stopMotionClient;
+    ros::ServiceClient* detectionClient;
 
     ros::Publisher* voice_order_publisher;
     ros::Publisher* visionDetech_publisher;

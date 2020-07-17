@@ -424,19 +424,19 @@ void StateController::thread_voiceCtl_modeTask_5() {
                 }
                 break;
             case 52:
-                sleep(5);
-                //拍照识别
+                sleep(2);
+                //拍照识别动作
                 if(rb_grabToy_detectAndGrab()){
                     subStep=53;
                 } else{
                     mode=0;
                     sub_isStop=true;
-                    RobSayWords("抓取失败，退回模式0");
-                    cout<<"抓取失败,退到模式0"<<endl;
+                    RobSayWords("拍照执行错误，退回模式0");
+                    cout<<"拍照执行错误,退到模式0"<<endl;
                 }
                 break;
             case 53:
-                //识别完成
+                //等待识别完成
                     if(ctlState->detect_object_ok){
                         subStep=54;
                         ctlState->detect_object_ok= false;
@@ -470,10 +470,8 @@ void StateController::thread_voiceCtl_modeTask_5() {
                 }
             // default :
             //     break;
-
         }
     }
-
 }
 
 //去到机器人握手抬起点
@@ -614,6 +612,10 @@ bool StateController::rb_grabToy_detectAndGrab(){
 
     if(rosTopicHd->detectionClient->call(d))
     {
+        //d.response.result;
+        if(d.response.result){
+            cout<<"识别成功"<<endl;
+        }
         cout<<"detectionClient服务连接成功"<<endl;
         return true;
     }else
@@ -621,7 +623,6 @@ bool StateController::rb_grabToy_detectAndGrab(){
         cout<<"detectionClient服务连接失败"<<endl;
     }
 
-    
     return false;
 }
 

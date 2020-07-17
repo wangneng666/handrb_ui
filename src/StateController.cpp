@@ -114,6 +114,7 @@ void StateController::voiceCtl_AutoRun() {
                 //如果10s定时完成还未检测到人
                 if(!rbQthread_timerFor10s->isRunning()){
                     mode=0;
+                    sub_isStop=true;
                     RobSayWords("60秒未检测到人，系统回到休眠状态，请按启动按钮重新激活");
                 }
                 break;
@@ -160,7 +161,7 @@ void StateController::voiceCtl_AutoRun() {
                     rbQthread_voiceCtl_modeTask_5->start();
                     assist_funcRunOnce= true;
                 }
-                if(subStep==55&&(!rbQthread_voiceCtl_modeTask_5->isRunning())){
+                if(subStep==56&&(!rbQthread_voiceCtl_modeTask_5->isRunning())){
                     // plainTextEdit->appendPlainText("抓娃娃完成");
                     mode=1;
                     assist_funcRunOnce= false;
@@ -247,12 +248,6 @@ void StateController::thread_voiceCtl_modeTask_1() {
                     cout<<"声音检测开启成功"<<endl;
                 }
 
-//                srv_witchPersonDetect.request.request= true;
-//                if(rosTopicHd->switch_personDetect_client->call(srv_witchPersonDetect))
-//                {
-//                    cout<<"行人检测开启成功"<<endl;
-//                    subStep=11;
-//                }
                 //打开行人检测
                 while(!flag_openOnce){
                     PersonDetect_Switch(true);
@@ -394,7 +389,7 @@ void StateController::thread_voiceCtl_modeTask_4() {
 //抓娃娃任务子线程
 void StateController::thread_voiceCtl_modeTask_5() {
     subStep=50;
-    while ((!isStop)&&(!sub_isStop)&&(subStep!=55))
+    while ((!isStop)&&(!sub_isStop)&&(subStep!=56))
     {
         switch (subStep)
         {
@@ -414,6 +409,7 @@ void StateController::thread_voiceCtl_modeTask_5() {
 
             case 51:
                 ctlState->grab_ok=false;
+                ctlState->detect_object_ok=false;
                 //当机器人空闲时，去到检测点
                 if(rb_grabToy_goPhotoPose()){
                     subStep=52;
@@ -440,9 +436,18 @@ void StateController::thread_voiceCtl_modeTask_5() {
                 }
                 break;
             case 53:
+                //识别完成
+                    if(ctlState->detect_object_ok){
+                        subStep=54;
+                        ctlState->detect_object_ok= false;
+                    }
+                    sleep(1);
+                    cout<<"等待识别完成"<<endl;
+                break;
+            case 54:
                     //等待抓取完成
                     if(ctlState->grab_ok){
-                        subStep=54;
+                        subStep=55;
                         cout<<"抓取完成"<<endl;
                         ctlState->grab_ok=false;
                     }else
@@ -452,21 +457,17 @@ void StateController::thread_voiceCtl_modeTask_5() {
                 sleep(1);
                 cout<<"等待抓取完成"<<endl;
                 break;
-            case 54:
+            case 55:
                 //回原点
-                std_srvs::Empty srv;
-                if(rosTopicHd->backHomeClient->call(srv))
+                if(RobGoHome()){
+                    cout<<"回原点成功"<<endl;
+                    subStep=56;
+                } else
                 {
-                    subStep=55;
-                }
-                else
-                {
+                    cout<<"回原点失败"<<endl;
                     mode=0;
                     sub_isStop=true;
-                    RobSayWords("回原点服务连接失败,退回模式0");
-                    cout<<"回原点服务连接失败"<<endl;
                 }
-                break;
             // default :
             //     break;
 
@@ -574,16 +575,14 @@ void StateController::setRobSpeed(float data) {
 }
 
 bool StateController::rb_grabToy_goPhotoPose(){
-    std_srvs::Empty srv;
-    if(!rosTopicHd->backHomeClient->call(srv))
+    if(RobGoHome()){
+        cout<<"回原点成功"<<endl;
+    } else
     {
-        ROS_INFO_STREAM("check back home server");
-        return  false;
+        cout<<"回原点失败"<<endl;
+        return false ;
     }
-    else
-    {
-        ROS_INFO_STREAM("back home SUCCESS");
-    }
+
     rb_msgAndSrv::rb_DoubleBool  dSrv;
     dSrv.request.request = true;
     if(!rosTopicHd->detectePointClient->call(dSrv))
@@ -624,4 +623,24 @@ bool StateController::rb_grabToy_detectAndGrab(){
 
     
     return false;
+}
+
+bool StateController::RobGoHome() {
+    std_srvs::SetBool srv;
+    srv.request.data=true;
+    if(rosTopicHd->backHomeClient->call(srv))
+    {
+        if(srv.response.success){
+            return true;
+        } else{
+            cout<<"回原点失败"<<endl;
+            return false;
+        }
+    }
+    else
+    {
+        cout<<"回原点服务连接失败"<<endl;
+        return false;
+
+    }
 }

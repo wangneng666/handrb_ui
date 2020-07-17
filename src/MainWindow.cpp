@@ -148,7 +148,7 @@ void MainWindow::initRosToptic(){
     switch_personDetect_client=Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("switch_personDetect");
     switch_voiceDetect_client=Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("switch_voiceDetect");
 
-    backHomeClient = Node->serviceClient<std_srvs::Empty>("/back_home");
+    backHomeClient = Node->serviceClient<std_srvs::SetBool>("/back_home");
     detectePointClient = Node->serviceClient<rb_msgAndSrv::rb_DoubleBool>("/handClaw_detectDoll");
     stopMotionClient = Node->serviceClient<industrial_msgs::StopMotion>("/stop_motion");
     //抓娃娃
@@ -647,13 +647,15 @@ void MainWindow::callback_getShakeResult_subscriber(std_msgs::Int16 msg){
 
 void MainWindow::callback_objectCallBack(hirop_msgs::ObjectArray obj)
 {
+    ctrlState.detect_object_ok=true;
+    stateController->updateState(&ctrlState);
     grab_ok=false;
     hirop_msgs::ObjectInfo pose = obj.objects.at(0);
     geometry_msgs::PoseStamped pp2 = pose.pose;
     transformFrame(pp2, "world");
     retObj = pp2;
     std::cout << "<-- objectCallBack ShakeReult ---"<<std::endl;
-    /************************************/
+    /*************************************************************************/
     pick_place_bridge::PickPlacePose srv;
     srv.request.Pose = retObj;
     pickServer_client.call(srv);
@@ -1205,16 +1207,22 @@ void MainWindow::slot_btn_tabgrabToy_stop() {
 //    } else {
 //        rbQthread_sysStop->start();
 //    }
-    std_srvs::Empty srv;
-    if(!backHomeClient.call(srv))
+
+    //回原点
+    std_srvs::SetBool srv;
+    srv.request.data=true;
+    if(backHomeClient.call(srv))
     {
-        ROS_INFO_STREAM("check back home server");
-        return ;
+        if(srv.response.success){
+            ROS_INFO_STREAM("back home SUCCESS");
+        }
     }
     else
     {
-        ROS_INFO_STREAM("back home SUCCESS");
+        ROS_INFO_STREAM("check back home server");
+        return;
     }
+    //检测点
     rb_msgAndSrv::rb_DoubleBool  dSrv;
     dSrv.request.request = true;
     if(!detectePointClient.call(dSrv))

@@ -19,6 +19,7 @@ struct controllerState{
     bool isEnd_shakeHand= false;//握手结束
     bool isOk_robPreparePose= false;
     bool grab_ok=false;
+    bool detect_object_ok=false;
 };
 
 struct rosTopicHandle{

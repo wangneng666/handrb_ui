@@ -35,6 +35,7 @@
 #include "industrial_msgs/StopMotion.h"
 #include "rb_msgAndSrv/rb_EmptyAndInt.h"
 #include "sensor_msgs/JointState.h"
+#include "std_srvs/SetBool.h"
 
 //标准库
 #include "ros/ros.h"

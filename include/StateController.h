@@ -39,6 +39,7 @@ public:
     QLabel* lable_showinfo;
     QPlainTextEdit* plainTextEdit;
     bool isRunning= false;
+    bool sub_isStop= false;         //子模块停止标志
 
 private:
     int subStep=0;                //追踪步序
@@ -48,7 +49,7 @@ private:
     ros::NodeHandle* Node;          //ros节点
     QMutex mutex_updateCtlState;    //数据更新加锁
     bool flag_run= true;            //状态监控运行标志
-    bool sub_isStop= false;         //子模块停止标志
+    bool flag_openOnce=false;
 
 
     //线程指针

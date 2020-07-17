@@ -18,6 +18,7 @@ struct controllerState{
     int voice_order= -1;//语音指令码
     bool isEnd_shakeHand= false;//握手结束
     bool isOk_robPreparePose= false;
+    bool grab_ok=false;
 };
 
 struct rosTopicHandle{

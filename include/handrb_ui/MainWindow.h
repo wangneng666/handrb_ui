@@ -34,6 +34,7 @@
 #include "hirop_msgs/ObjectArray.h"
 #include "industrial_msgs/StopMotion.h"
 #include "rb_msgAndSrv/rb_EmptyAndInt.h"
+#include "sensor_msgs/JointState.h"
 
 //标准库
 #include "ros/ros.h"
@@ -91,6 +92,7 @@ private:
     bool Holdflag_RobSetMode= false; //
     bool Holdflag_RobDownEnable= false; //
     bool flag_robPreparePose= false;//机器人到达握手等待点
+    bool grab_ok=false;
 
     StateController* stateController;//逻辑控制模块
     controllerState ctrlState;
@@ -228,7 +230,7 @@ private:
     void callback_robStatus_subscriber(const industrial_msgs::RobotStatus::ConstPtr robot_status);
     void callback_camera_subscriber(const sensor_msgs::Image::ConstPtr& msg);
     void callback_forceSensor_subscriber(geometry_msgs::Wrench msg);
-    void callback_impedenceLive_subscriber(std_msgs::Bool msg);
+    void callback_impedenceLive_subscriber(sensor_msgs::JointState msg);
     void callback_rbCtlBusy_status_subscriber(std_msgs::Bool msg);
     void callback_isOpenFollow_subscriber(std_msgs::Bool msg);
     void callback_getShakeResult_subscriber(std_msgs::Int16 msg);

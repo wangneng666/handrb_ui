@@ -112,7 +112,7 @@ void MainWindow::SysVarInit() {
 void MainWindow::initRosToptic(){
     //话题
     flag_forceSensor_publisher=Node->advertise<std_msgs::Bool>("forceSensor_moveFlag",1);
-    shakehandOver_publisher=Node->advertise<std_msgs::Bool>("shake_over",1);
+    shakehandOver_publisher=Node->advertise<std_msgs::Bool>("shake_over", 10);
     robStatusSend_publisher=Node->advertise<std_msgs::Bool>("uipub_robStatus",1);
     impedenceLive_publisher=Node->advertise<std_msgs::Bool>("uipub_impedenceLive",1);
     rbGoHome_publisher=Node->advertise<std_msgs::Int8>("homePoint",1);
@@ -130,7 +130,7 @@ void MainWindow::initRosToptic(){
     personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
     grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
     robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
-    impedenceLive_subscriber=Node->subscribe<std_msgs::Bool>("impedence_live",1,&MainWindow::callback_impedenceLive_subscriber,this);
+    impedenceLive_subscriber=Node->subscribe<sensor_msgs::JointState>("impedance_err",1,&MainWindow::callback_impedenceLive_subscriber,this);
     isOpenFollow_subscriber=Node->subscribe<std_msgs::Bool>("is_follow",1,&MainWindow::callback_isOpenFollow_subscriber,this);
     getShakeHandResult_subscriber = Node->subscribe<std_msgs::Int16>("impedance_result",1,&MainWindow::callback_getShakeResult_subscriber,this);
     //服务
@@ -307,12 +307,12 @@ void MainWindow::slot_timer_listen_status() {
     {
         flag_rbCtlStartUp=false;
     }
-    if(rbQthread_rbImpMoudlePrepare->isRunning()){
-            mutex_devDetector.lock();
-            impedenceConn_Detector.lifeNum=100;
-            impedenceConn_Detector.status= true;
-            mutex_devDetector.unlock();
-    }
+    // if(rbQthread_rbImpMoudlePrepare->isRunning()){
+    //         mutex_devDetector.lock();
+    //         impedenceConn_Detector.lifeNum=100;
+    //         impedenceConn_Detector.status= true;
+    //         mutex_devDetector.unlock();
+    // }
 
     //机器人故障时下使能
     if(!Holdflag_RobDownEnable){
@@ -434,6 +434,10 @@ void MainWindow::thread_rbQthread_beginRun() {
             if(!stateController->isRunning){
                 stateController->start();
                 stateController->isStart= true;
+                stateController->isStop= false;
+                stateController->sub_isStop= false;
+
+
             } else{
                 emit emitQmessageBox(infoLevel::information,QString("总控系统正在运行中，请不要重复运行!"));
             }
@@ -467,9 +471,6 @@ void MainWindow::thread_rbQthread_sysStop() {
         if(srv.response.finsh){
             emit emitQmessageBox(infoLevel::warning, "模式设置为点动模式!");
         }
-    }else
-    {
-        emit emitQmessageBox(infoLevel::warning, "模式设置服务连接失败!");
     }
     system((char*)"rostopic pub -1 /stop_move std_msgs/Bool \"data: true\"");
     stateController->isStop= true;
@@ -495,8 +496,8 @@ void MainWindow::slot_btn_tabmain_sysReset() {
         {
         Timer_forAutoRunShakeHand->stop();
 //         flag_havedReset= true;
-        system("rosrun openni2_tracker voice_shutdown.sh");
-        system("rosrun openni2_tracker vision_shutdown.sh");
+        system("rosrun openni2_tracker voice_shutdown.sh &");
+        system("rosrun openni2_tracker vision_shutdown.sh &");
         system("rosnode kill $(rosnode list |grep -v handrb_ui)");
         
         }
@@ -646,6 +647,7 @@ void MainWindow::callback_getShakeResult_subscriber(std_msgs::Int16 msg){
 
 void MainWindow::callback_objectCallBack(hirop_msgs::ObjectArray obj)
 {
+    grab_ok=false;
     hirop_msgs::ObjectInfo pose = obj.objects.at(0);
     geometry_msgs::PoseStamped pp2 = pose.pose;
     transformFrame(pp2, "world");
@@ -657,6 +659,8 @@ void MainWindow::callback_objectCallBack(hirop_msgs::ObjectArray obj)
     pickServer_client.call(srv);
     if(srv.response.result != true){
         std::cout << "planning pick error  ---"<<std::endl;
+        ctrlState.grab_ok=false;
+        stateController->updateState(&ctrlState);
         return ;
     }
     ROS_INFO_STREAM("****************************************************");
@@ -671,7 +675,15 @@ void MainWindow::callback_objectCallBack(hirop_msgs::ObjectArray obj)
     placeServer_client.call(srv);
     if(srv.response.result != true){
         std::cout << "place pick error  ---"<<std::endl;
+        ctrlState.grab_ok=false;
+        stateController->updateState(&ctrlState);
         return ;
+    }
+    else
+    {
+        cout<<"-------------------55555555抓取完成--555555555--------------------"<<endl;
+        ctrlState.grab_ok=true;
+        stateController->updateState(&ctrlState);
     }
 }
 
@@ -1298,7 +1310,7 @@ void MainWindow::slot_cBox_tabShakeHand_setMode(int index) {
  }
 }
 
-void MainWindow::callback_impedenceLive_subscriber(std_msgs::Bool msg) {
+void MainWindow::callback_impedenceLive_subscriber(sensor_msgs::JointState msg) {
     mutex_devDetector.lock();
     impedenceConn_Detector.lifeNum=100;
     impedenceConn_Detector.status= true;
@@ -1402,8 +1414,12 @@ void MainWindow::slot_btn_tabShakeHand_shakeHandEnd()
             if(rbQthread_rbImpMoudlePrepare->isRunning()){
                 cout<<"执行停止"<<endl;
                 system((char*)"rosservice call /stop_motion");
-                system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
+                system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" ");
             }
+            // impedenceLive_publisher.publish(false);
+            // sleep(1);
+            // sleep(2);
+            cout<<"-----------------------发出握手结束信号--------------------------"<<endl;
             std_msgs::Bool msg;
             msg.data=true;
             shakehandOver_publisher.publish(msg);

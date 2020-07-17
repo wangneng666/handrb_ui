@@ -34,7 +34,7 @@ StateController::StateController() {
     rbQthreadList.push_back(rbQthread_voiceCtl_modeTask_4);
     rbQthreadList.push_back(rbQthread_voiceCtl_modeTask_5);
     rbQthreadList.push_back(rbQthread_rbGoShakeHandPose);
-    rbQthreadList.push_back(rbQthread_timerFor10s);
+    //rbQthreadList.push_back(rbQthread_timerFor10s);
     cout<<"完成构造函数"<<endl;
 }
 
@@ -83,17 +83,18 @@ void StateController::voiceCtl_AutoRun() {
         {
             //模式:-1(故障模式) 退出
             case -1:
-                    plainTextEdit->appendPlainText("进入故障模式-1");
+                    // plainTextEdit->appendPlainText("进入故障模式-1");
                     ContrlMode_N1_task();//检测到故障马上停止运动
                 break;
             //模式:0(等待模式)
             case 0:
+                // plainTextEdit->appendPlainText("进入模式0");
                 if(isStart)
                 {
                     cout<<"开始"<<endl;
                     mode=1;
                     isStart= false;
-                    plainTextEdit->appendPlainText("进入模式1,行人检测");
+                    // plainTextEdit->appendPlainText("进入模式1,行人检测");
                 }
                 break;
             //模式:1(行人检测模式)
@@ -108,12 +109,12 @@ void StateController::voiceCtl_AutoRun() {
                 if(subStep==13&&(!rbQthread_voiceCtl_modeTask_1->isRunning())){
                     mode=2;
                     assist_funcRunOnce= false;
-                    plainTextEdit->appendPlainText("进入模式2");
+                    // plainTextEdit->appendPlainText("进入模式2");
                 }
                 //如果10s定时完成还未检测到人
                 if(!rbQthread_timerFor10s->isRunning()){
                     mode=0;
-                    RobSayWords("十秒未检测到人，系统回到休眠状态，请按启动按钮重新激活");
+                    RobSayWords("60秒未检测到人，系统回到休眠状态，请按启动按钮重新激活");
                 }
                 break;
             //模式:2(行人减速设置模式)
@@ -121,7 +122,7 @@ void StateController::voiceCtl_AutoRun() {
                 //设置减速比例
                 // setRobSpeed(0.1);
                 mode=3;
-                plainTextEdit->appendPlainText("进入模式3,语音选择功能");
+                // plainTextEdit->appendPlainText("进入模式3,语音选择功能");
                 break;
             //模式:3(等待握手抓娃娃/功能触发)
             case 3:
@@ -132,12 +133,12 @@ void StateController::voiceCtl_AutoRun() {
                 if(subStep==32&&(!rbQthread_voiceCtl_modeTask_3->isRunning())){
                     mode=4;
                     assist_funcRunOnce= false;
-                    plainTextEdit->appendPlainText("进入模式4,选择握手功能");
+                    // plainTextEdit->appendPlainText("进入模式4,选择握手功能");
                 }
                 if(subStep==33&&(!rbQthread_voiceCtl_modeTask_3->isRunning())){
                     mode=5;
                     assist_funcRunOnce= false;
-                    plainTextEdit->appendPlainText("进入模式5,选择抓娃娃功能");
+                    // plainTextEdit->appendPlainText("进入模式5,选择抓娃娃功能");
                 }
                 break;
             //模式:4(握手)
@@ -147,8 +148,9 @@ void StateController::voiceCtl_AutoRun() {
                     assist_funcRunOnce= true;
                 }
                 if(subStep==44&&(!rbQthread_voiceCtl_modeTask_4->isRunning())){
+                    // plainTextEdit->appendPlainText("握手完成");
                     mode=1;
-                    plainTextEdit->appendPlainText("进入模式1,等待行人检测");
+                    // plainTextEdit->appendPlainText("进入模式0");
                     assist_funcRunOnce= false;
                 }
                 break;
@@ -158,10 +160,11 @@ void StateController::voiceCtl_AutoRun() {
                     rbQthread_voiceCtl_modeTask_5->start();
                     assist_funcRunOnce= true;
                 }
-                if(subStep==54&&(!rbQthread_voiceCtl_modeTask_5->isRunning())){
+                if(subStep==55&&(!rbQthread_voiceCtl_modeTask_5->isRunning())){
+                    // plainTextEdit->appendPlainText("抓娃娃完成");
                     mode=1;
                     assist_funcRunOnce= false;
-                    plainTextEdit->appendPlainText("进入模式1,等待行人检测");
+                    // plainTextEdit->appendPlainText("进入模式0");
                 }
                 break;
         }
@@ -219,6 +222,7 @@ void StateController::ContrlMode_N1_task() {
     rosTopicHd->switch_voiceDetect_client->call(srv);
     //关闭行人检测
     PersonDetect_Switch(false);
+    flag_openOnce=false;
     //数据初始初始化
     initVal();
 }
@@ -250,7 +254,10 @@ void StateController::thread_voiceCtl_modeTask_1() {
 //                    subStep=11;
 //                }
                 //打开行人检测
-                PersonDetect_Switch(true);
+                while(!flag_openOnce){
+                    PersonDetect_Switch(true);
+                    flag_openOnce=true;
+                }
                 subStep=11;
                 break;
             case 11:
@@ -277,6 +284,8 @@ void StateController::thread_voiceCtl_modeTask_1() {
             case 12:
                 //发出声音
                 RobSayWords("我可以和你做朋友吗");
+                PersonDetect_Switch(false);
+                flag_openOnce=false;
                 subStep=13;
                 break;
         }
@@ -363,15 +372,16 @@ void StateController::thread_voiceCtl_modeTask_4() {
                     ctlState->isEnd_shakeHand= false;
                     //关闭阻抗
                     closeImpedence();
-                    sleep(1);
+                    sleep(2);
                     //给机器人控制模块发送握手结束信号
                     std_msgs::Bool msg;
                     msg.data=true;
                     rosTopicHd->shakehandOver_publisher->publish(msg);
                     RobSayWords("祝您生活愉快,再见!");
-                    sleep(2);
+                    sleep(6);
                     subStep=43;
                 }
+                break;
             case 43:
                 if(!ctlState->flag_rbCtlBusy){
                     subStep=44;
@@ -384,7 +394,7 @@ void StateController::thread_voiceCtl_modeTask_4() {
 //抓娃娃任务子线程
 void StateController::thread_voiceCtl_modeTask_5() {
     subStep=50;
-    while ((!isStop)&&(!sub_isStop)&&(subStep!=53))
+    while ((!isStop)&&(!sub_isStop)&&(subStep!=55))
     {
         switch (subStep)
         {
@@ -403,6 +413,7 @@ void StateController::thread_voiceCtl_modeTask_5() {
                 }
 
             case 51:
+                ctlState->grab_ok=false;
                 //当机器人空闲时，去到检测点
                 if(rb_grabToy_goPhotoPose()){
                     subStep=52;
@@ -411,25 +422,54 @@ void StateController::thread_voiceCtl_modeTask_5() {
                 else
                 {
                     mode=0;
+                    sub_isStop=true;
                     RobSayWords("去到检测点失败，退回模式0");
                     cout<<"去掉检测点,退到模式0"<<endl;
                 }
                 break;
             case 52:
+                sleep(5);
                 //拍照识别
                 if(rb_grabToy_detectAndGrab()){
                     subStep=53;
                 } else{
                     mode=0;
+                    sub_isStop=true;
                     RobSayWords("抓取失败，退回模式0");
                     cout<<"抓取失败,退到模式0"<<endl;
                 }
                 break;
             case 53:
-                if(!ctlState->flag_rbCtlBusy){
-                    subStep=54;
+                    //等待抓取完成
+                    if(ctlState->grab_ok){
+                        subStep=54;
+                        cout<<"抓取完成"<<endl;
+                        ctlState->grab_ok=false;
+                    }else
+                    {
+                        cout<<"抓取未完成"<<endl;
+                    }
+                sleep(1);
+                cout<<"等待抓取完成"<<endl;
+                break;
+            case 54:
+                //回原点
+                std_srvs::Empty srv;
+                if(rosTopicHd->backHomeClient->call(srv))
+                {
+                    subStep=55;
+                }
+                else
+                {
+                    mode=0;
+                    sub_isStop=true;
+                    RobSayWords("回原点服务连接失败,退回模式0");
+                    cout<<"回原点服务连接失败"<<endl;
                 }
                 break;
+            // default :
+            //     break;
+
         }
     }
 
@@ -458,7 +498,7 @@ void StateController::thread_rbQthread_spin() {
     while (flag_run){
 
         //刷新步序状态
-        lable_showinfo->setText(QString("模式:%1,步序:%2").arg(mode).arg(subStep));
+        //lable_showinfo->setText(QString("模式:%1,步序:%2").arg(mode).arg(subStep));
 
         //刷新模块运行状态标志
         int count=0;
@@ -490,16 +530,21 @@ void StateController::RobSayWords(std::string words) {
 //关闭阻抗
 void StateController::closeImpedence() {
     cout<<"关闭阻抗"<<endl;
-    hsr_rosi_device::setModeSrv srv_SetMode;
-    srv_SetMode.request.mode=0;
-    if(rosTopicHd->RobSetMode_client->call(srv_SetMode)){
-        cout<<"设置为点动模式"<<endl;
-    } else
-    {
-        cout<<"模式设置服务连接失败"<<endl;
-    }
-    //system((char*)"rosservice call /stop_motion");
-     system("rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
+    // hsr_rosi_device::setModeSrv srv_SetMode;
+    // srv_SetMode.request.mode=0;
+    // if(rosTopicHd->RobSetMode_client->call(srv_SetMode)){
+    //     cout<<"设置为点动模式"<<endl;
+    // } else
+    // {
+    //     cout<<"模式设置服务连接失败"<<endl;
+    // }
+    system("rosservice call /set_mode_srv \"mode: 0\"");
+    system((char*)"rosservice call /stop_motion");
+    system("rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
+    // sleep(1);
+    // std_msgs::Bool msg_imp;
+    // msg_imp.data=true;
+    // rosTopicHd->impedenceLive_publisher->publish(msg_imp);
 }
 
 //开启阻抗
@@ -533,6 +578,7 @@ bool StateController::rb_grabToy_goPhotoPose(){
     if(!rosTopicHd->backHomeClient->call(srv))
     {
         ROS_INFO_STREAM("check back home server");
+        return  false;
     }
     else
     {
@@ -543,31 +589,39 @@ bool StateController::rb_grabToy_goPhotoPose(){
     if(!rosTopicHd->detectePointClient->call(dSrv))
     {
         ROS_INFO_STREAM("check handClaw_detectDoll server");
+        return false;
     }
     else
     {
         if(dSrv.response.respond)
         {
-            return true;
             ROS_INFO_STREAM("move to detete point SUCCESS");
+            return true;
         }
         else
         {
             ROS_INFO("move to detect point FAILURE");
+            return false;
         }
     }
-    return false;
 }
 
 bool StateController::rb_grabToy_detectAndGrab(){
     hirop_msgs::detection d;
     d.request.detectorName = "Yolo6d";
     d.request.detectorType = 1;
+    //d.request.objectName = "bluerabbit";
     d.request.objectName = "toy1";
-    if(rosTopicHd->detectionClient->call(d)){
-        if(d.response.result){
-            return true;
-        }
+
+    if(rosTopicHd->detectionClient->call(d))
+    {
+        cout<<"detectionClient服务连接成功"<<endl;
+        return true;
+    }else
+    {
+        cout<<"detectionClient服务连接失败"<<endl;
     }
+
+    
     return false;
 }

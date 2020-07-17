@@ -20,6 +20,7 @@ struct controllerState{
     bool isOk_robPreparePose= false;
     bool grab_ok=false;
     bool detect_object_ok=false;
+    bool err_PlanPose=false;
 };
 
 struct rosTopicHandle{
@@ -38,6 +39,8 @@ struct rosTopicHandle{
     ros::ServiceClient* detectePointClient;
     ros::ServiceClient* stopMotionClient;
     ros::ServiceClient* detectionClient;
+    ros::ServiceClient* sayGoodByeAction_client;
+
 
     ros::Publisher* voice_order_publisher;
     ros::Publisher* visionDetech_publisher;

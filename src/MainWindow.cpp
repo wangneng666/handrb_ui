@@ -157,6 +157,7 @@ void MainWindow::initRosToptic(){
     objectArraySub = Node->subscribe<hirop_msgs::ObjectArray>("object_array", 1, &MainWindow::callback_objectCallBack, this);
     pickServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("pick");
     placeServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("place");
+    sayGoodByeAction_client = Node->serviceClient<std_srvs::SetBool>("sayGoodByeAction");
 
     rosTopicHd.RobReset_client=&RobReset_client;
     rosTopicHd.RobEnable_client=&RobEnable_client;
@@ -173,6 +174,8 @@ void MainWindow::initRosToptic(){
     rosTopicHd.detectePointClient=&detectePointClient;
     rosTopicHd.stopMotionClient=&stopMotionClient;
     rosTopicHd.detectionClient=&detectionClient;
+    rosTopicHd.sayGoodByeAction_client=&sayGoodByeAction_client;
+
 
     rosTopicHd.flag_forceSensor_publisher=&flag_forceSensor_publisher;
     rosTopicHd.shakehandOver_publisher=&shakehandOver_publisher;
@@ -452,6 +455,7 @@ void MainWindow::thread_rbQthread_beginRun() {
 //系统停止
 void MainWindow::slot_btn_tabmain_sysStop() {
     Timer_forAutoRunShakeHand->stop();
+    stateController->setCloseVoice();
     if(rbQthread_sysStop->isRunning()){
         emit emitQmessageBox(infoLevel::warning,QString("请不要重复进行系统停止!"));
     } else{
@@ -602,9 +606,20 @@ void MainWindow::slot_btn_gripper_Y_Pose() {
 }
 
 void MainWindow::slot_btn_rbGoHomePose() {
-    std_msgs::Int8 msg;
-    msg.data=0;
-    rbGoHome_publisher.publish(msg);
+    std_srvs::SetBool srv;
+    srv.request.data=true;
+    if(backHomeClient.call(srv))
+    {
+        if(srv.response.success){
+            ROS_INFO_STREAM("back home SUCCESS");
+        }
+    }
+    else
+    {
+        ROS_INFO_STREAM("check back home server");
+        return;
+    }
+    // system("rosservice call /back_home \"data: true\" ");
 }
 
 //void MainWindow::slot_btn_tabfunc_shakehand() {
@@ -647,8 +662,6 @@ void MainWindow::callback_getShakeResult_subscriber(std_msgs::Int16 msg){
 
 void MainWindow::callback_objectCallBack(hirop_msgs::ObjectArray obj)
 {
-    ctrlState.detect_object_ok=true;
-    stateController->updateState(&ctrlState);
     grab_ok=false;
     hirop_msgs::ObjectInfo pose = obj.objects.at(0);
     geometry_msgs::PoseStamped pp2 = pose.pose;
@@ -658,6 +671,17 @@ void MainWindow::callback_objectCallBack(hirop_msgs::ObjectArray obj)
     /*************************************************************************/
     pick_place_bridge::PickPlacePose srv;
     srv.request.Pose = retObj;
+    std::cout << "<- objectCallBack ShakeReult Z "<<srv.request.Pose.pose.position.z<<std::endl;
+
+    if(srv.request.Pose.pose.position.z < 1.1){
+        
+        cout<<"轨迹规划点位过低,请检测";
+        ctrlState.grab_ok=false;
+        ctrlState.err_PlanPose=true;
+        stateController->updateState(&ctrlState); 
+        return;
+    }
+        // srv.request.Pose.pose.position.z = 1.08;
     pickServer_client.call(srv);
     if(srv.response.result != true){
         std::cout << "planning pick error  ---"<<std::endl;

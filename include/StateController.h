@@ -24,7 +24,7 @@
 #include "hsr_rosi_device/setModeSrv.h"
 #include "hirop_msgs/robotError.h"
 using namespace std;
-
+#include <atomic>
 //业务逻辑控制
 class StateController {
 public:
@@ -34,7 +34,7 @@ public:
 public:
     int mode=0;                     //模式
     bool isStart= false;            //开始运行按钮标志
-    bool isStop= false;             //停止按钮标志
+    atomic<bool>  isStop;       //停止按钮标志
     //测试显示用途
     QLabel* lable_showinfo;
     QPlainTextEdit* plainTextEdit;
@@ -50,6 +50,8 @@ private:
     QMutex mutex_updateCtlState;    //数据更新加锁
     bool flag_run= true;            //状态监控运行标志
     bool flag_openOnce=false;
+    bool timer_ok=false;
+    atomic<bool> stop_timer;
 
 
     //线程指针
@@ -165,7 +167,16 @@ public:
       * 回原点
       */
       bool RobGoHome();
+      
 
+      void setCloseVoice(){
+            system("rosrun openni2_tracker vision_shutdown.sh");
+            rb_msgAndSrv::rb_DoubleBool srv;
+            srv.request.request= false;
+            rosTopicHd->switch_voiceDetect_client->call(srv);
+            //
+            rbQthread_timerFor10s->quit();
+      }
 };
 
 

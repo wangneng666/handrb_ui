@@ -477,11 +477,15 @@ void MainWindow::slot_btn_tabmain_sysStop() {
 void MainWindow::thread_rbQthread_sysStop() {
     system((char*)"rosservice call /stop_motion");
     system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
-    // system("rosservice call /set_mode_srv \"mode: 0\"");
+    hsr_rosi_device::SetEnableSrv srv;
+    srv.request.enable= false;
+    RobEnable_client.call(srv);
+
     //模式切换
-    hsr_rosi_device::setModeSrv srv;
-    srv.request.mode=0;
-    RobSetMode_client.call(srv);
+    // hsr_rosi_device::setModeSrv srv;
+    // srv.request.mode=0;
+    // RobSetMode_client.call(srv);
+    system("rosservice call /set_mode_srv \"mode: 0\"");
     system((char*)"rostopic pub -1 /stop_move std_msgs/Bool \"data: true\"");
 }
 

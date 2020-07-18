@@ -40,6 +40,10 @@ struct rosTopicHandle{
     ros::ServiceClient* stopMotionClient;
     ros::ServiceClient* detectionClient;
     ros::ServiceClient* sayGoodByeAction_client;
+    ros::ServiceClient* robOKAction_client;
+//
+    ros::ServiceClient* setByeByeAction_client;
+    ros::ServiceClient* setByeByeInterrupt_client;
 
 
     ros::Publisher* voice_order_publisher;

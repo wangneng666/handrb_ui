@@ -2,7 +2,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf/transform_listener.h>
 #include "pick_place_bridge/PickPlacePose.h"
-
+#include <hirop_msgs/setStartUpProject.h>
+#include <hirop_msgs/setStopProject.h>
 
 MainWindow::MainWindow(ros::NodeHandle *node, QWidget *parent):BaseWindow(node,parent){
     //系统变量初始化
@@ -158,6 +159,11 @@ void MainWindow::initRosToptic(){
     pickServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("pick");
     placeServer_client = Node->serviceClient<pick_place_bridge::PickPlacePose>("place");
     sayGoodByeAction_client = Node->serviceClient<std_srvs::SetBool>("sayGoodByeAction");
+    robOKAction_client = Node->serviceClient<std_srvs::SetBool>("/ok_pose");
+
+    setByeByeAction_client = Node->serviceClient<hirop_msgs::setStartUpProject>("/setStartUpProject");
+    setByeByeInterrupt_client = Node->serviceClient<hirop_msgs::setStopProject>("/setStopProject");
+
 
     rosTopicHd.RobReset_client=&RobReset_client;
     rosTopicHd.RobEnable_client=&RobEnable_client;
@@ -175,7 +181,10 @@ void MainWindow::initRosToptic(){
     rosTopicHd.stopMotionClient=&stopMotionClient;
     rosTopicHd.detectionClient=&detectionClient;
     rosTopicHd.sayGoodByeAction_client=&sayGoodByeAction_client;
+    rosTopicHd.robOKAction_client=&robOKAction_client;
 
+    rosTopicHd.setByeByeAction_client = &setByeByeAction_client;
+    rosTopicHd.setByeByeInterrupt_client =&setByeByeInterrupt_client;
 
     rosTopicHd.flag_forceSensor_publisher=&flag_forceSensor_publisher;
     rosTopicHd.shakehandOver_publisher=&shakehandOver_publisher;
@@ -454,8 +463,8 @@ void MainWindow::thread_rbQthread_beginRun() {
 
 //系统停止
 void MainWindow::slot_btn_tabmain_sysStop() {
+    stateController->stopController();
     Timer_forAutoRunShakeHand->stop();
-    stateController->setCloseVoice();
     if(rbQthread_sysStop->isRunning()){
         emit emitQmessageBox(infoLevel::warning,QString("请不要重复进行系统停止!"));
     } else{
@@ -469,15 +478,11 @@ void MainWindow::thread_rbQthread_sysStop() {
     system((char*)"rosservice call /stop_motion");
     system((char*)"rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
     // system("rosservice call /set_mode_srv \"mode: 0\"");
+    //模式切换
     hsr_rosi_device::setModeSrv srv;
     srv.request.mode=0;
-    if(RobSetMode_client.call(srv)){
-        if(srv.response.finsh){
-            emit emitQmessageBox(infoLevel::warning, "模式设置为点动模式!");
-        }
-    }
+    RobSetMode_client.call(srv);
     system((char*)"rostopic pub -1 /stop_move std_msgs/Bool \"data: true\"");
-    stateController->isStop= true;
 }
 
 //系统复位 goto 等5s定时重启

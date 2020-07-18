@@ -52,6 +52,7 @@ private:
     bool flag_openOnce=false;
     bool timer_ok=false;
     atomic<bool> stop_timer;
+    bool detectPeople = false;
 
 
     //线程指针
@@ -168,15 +169,16 @@ public:
       */
       bool RobGoHome();
       
+     /***
+      * 停止控制器
+      */
+      void stopController();
 
-      void setCloseVoice(){
-            system("rosrun openni2_tracker vision_shutdown.sh");
-            rb_msgAndSrv::rb_DoubleBool srv;
-            srv.request.request= false;
-            rosTopicHd->switch_voiceDetect_client->call(srv);
-            //
-            rbQthread_timerFor10s->quit();
-      }
+      /***
+      * 再见动作
+      */
+     bool GoodByeAction();
+
 };
 
 

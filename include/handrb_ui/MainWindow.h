@@ -135,6 +135,11 @@ private:
     ros::ServiceClient detectePointClient;
     ros::ServiceClient stopMotionClient;
     ros::ServiceClient sayGoodByeAction_client;
+    ros::ServiceClient robOKAction_client;
+    //**/
+    ros::ServiceClient setByeByeAction_client;
+    ros::ServiceClient setByeByeInterrupt_client;
+
 
     ros::Subscriber voiceSolveRes_subcriber;
     ros::Subscriber personDetectRes_subcriber;

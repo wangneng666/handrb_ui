@@ -129,7 +129,8 @@ void MainWindow::initRosToptic(){
     voice_order_publisher = Node->advertise<std_msgs::String>("voiceSolve_res", 1);
 
     personDetectRes_subcriber=Node->subscribe<sensor_msgs::Image>("videphoto_feedback",1,boost::bind(&MainWindow::callback_personDetectRes_subcriber, this, _1));
-    grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
+    //grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("DollDetection_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
+    grabDollImagRes_subcriber=Node->subscribe<sensor_msgs::Image>("/preview_image",1,boost::bind(&MainWindow::callback_grabDollImagRes_subcriber, this, _1));
     robStatus_subscriber=Node->subscribe<industrial_msgs::RobotStatus>("robot_status",1,boost::bind(&MainWindow::callback_robStatus_subscriber,this,_1));
     impedenceLive_subscriber=Node->subscribe<sensor_msgs::JointState>("impedance_err",1,&MainWindow::callback_impedenceLive_subscriber,this);
     isOpenFollow_subscriber=Node->subscribe<std_msgs::Bool>("is_follow",1,&MainWindow::callback_isOpenFollow_subscriber,this);

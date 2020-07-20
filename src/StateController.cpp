@@ -213,6 +213,8 @@ void StateController::ContrlMode_N1_task() {
     RobSayWords("设备故障,请检查");
     isStop= true;
     sub_isStop= true;
+    stop_timer = true;
+    detectPeople = false;
     system("rosservice call /set_mode_srv \"mode: 0\"");
     system("rosservice call /stop_motion");
     system("rostopic pub -1 /set_ready_exit std_msgs/Bool \"data: true\" &");
@@ -235,9 +237,9 @@ void StateController::thread_voiceCtl_modeTask_N1() {
 
 void StateController::thread_voiceCtl_modeTask_1() {
     subStep=10;
-    flag_openOnce=false;
+    // flag_openOnce=false;
     sub_isStop=false;
-    rb_msgAndSrv::rb_EmptyAndInt srv;
+    timer_ok=false;
     rb_msgAndSrv::rb_DoubleBool srv_witchPersonDetect;
     rb_msgAndSrv::rb_DoubleBool srv_witchVoiceDetect;
 
@@ -262,58 +264,44 @@ void StateController::thread_voiceCtl_modeTask_1() {
                 break;
             case 11:
                 //监听数据
+                sleep(1);
                 cout<<"监听数据"<<endl;
-                if(rosTopicHd->personDetect_client->call(srv))
+                if(detectPerson()){
+                    stop_timer=true;
+                    subStep=12;
+                    detectPeople = true;
+                    cout<<"检测到行人"<<endl;
+                }else
                 {
-                    //检测到行人
-                    if(srv.response.res_data==1)
+                    //60s定时完毕
+                    if(timer_ok)
                     {
-                        stop_timer=true;
-                        subStep=12;
-                        detectPeople = true;
+                        timer_ok=false;
+                        cout<<"没有检测到行人"<<endl;
+                        sub_isStop=true;
+                        assist_funcRunOnce=false;
+                        mode=1;
+                        // PersonDetect_Switch(false);
+                        // flag_openOnce=false;
+                        RobSayWords("再见,欢迎下次光临");
+                            if(GoodByeAction()){
+                                cout<<"再见动作执行完成"<<endl;
+                                sub_isStop=true;
+                                mode=1;
+                            }else
+                            {
+                                RobSayWords("再见执行失败,请检查故障");
+                                sub_isStop=true;
+                                mode=-1;
+                            }
                     }
-                    else//没检测到人 
-                    {
-                        if(detectPeople)
-                        {
-                            detectPeople = false;
-                            //开始计时60s
-                            rbQthread_timerFor10s->start();
-                        }
-
-                        //60s定时完毕
-                        if(timer_ok)
-                        {
-                            timer_ok=false;
-                            cout<<"没有检测到行人"<<endl;
-                            sub_isStop=true;
-                            assist_funcRunOnce=false;
-                            mode=1;
-                            PersonDetect_Switch(false);
-                            flag_openOnce=false;
-                            RobSayWords("再见,欢迎下次光临");
-                             if(GoodByeAction()){
-                                 sub_isStop=true;
-                                 mode=1;
-                             }else
-                             {
-                                 RobSayWords("再见执行失败,请检查故障");
-                                 sub_isStop=true;
-                                 mode=-1;
-                             }
-                        }
-                    }
-                } 
-                else
-                {
-                    cout<<"行人检测服务连接失败"<<endl;
                 }
 
                 break;
             case 12:
-                //发出声音
-                PersonDetect_Switch(false);
-                flag_openOnce=false;
+                //关闭行人检测
+                // PersonDetect_Switch(false);
+                // flag_openOnce=false;
                 subStep=13;
                 break;
         }
@@ -324,6 +312,8 @@ void StateController::thread_voiceCtl_modeTask_1() {
 //(等待握手抓娃娃/功能触发)任务子线程
 void StateController::thread_voiceCtl_modeTask_3() {
     subStep=30;
+    sub_isStop=false;
+
     while ((!isStop)&&(!sub_isStop)&&(subStep<32))
     {
         switch (subStep)
@@ -336,6 +326,37 @@ void StateController::thread_voiceCtl_modeTask_3() {
                 subStep=31;
                 break;
             case 31:
+                //监听数据
+                if(detectPerson()){
+                    stop_timer=true;
+                    detectPeople = true;
+                    cout<<"检测到行人"<<endl;
+
+                }else
+                {
+                    cout<<"没有行人"<<endl;
+                    //60s定时完毕
+                    if(timer_ok)
+                    {
+                        timer_ok=false;
+                        cout<<"没有检测到行人"<<endl;
+                        assist_funcRunOnce=false;
+                        // PersonDetect_Switch(false);
+                        // flag_openOnce=false;
+                        RobSayWords("再见,欢迎下次光临");
+                            if(GoodByeAction()){
+                                cout<<"再见动作执行完成"<<endl;
+                                sub_isStop=true;
+                                mode=1;
+                            }else
+                            {
+                                RobSayWords("再见执行失败,请检查故障");
+                                sub_isStop=true;
+                                mode=-1;
+                            }
+                    }
+                }
+
                 if(ctlState->voice_order==2){
                     subStep=32;
                 }
@@ -413,9 +434,12 @@ void StateController::thread_voiceCtl_modeTask_4() {
             case 43:
                 sleep(3);
                 if(!ctlState->flag_rbCtlBusy){
+                    sleep(2);
+                    closeAndOpenEnable();
                     subStep=44;
                     mode=1;
                     assist_funcRunOnce= false;
+
                 }
                 break;
         }
@@ -452,10 +476,12 @@ void StateController::thread_voiceCtl_modeTask_5() {
                         subStep=52;
                         break ;
                     }
+                    
                 }
-                mode=-1;
-                sub_isStop=true;
-                cout<<"robOKAction_clien connect faile"<<endl;
+                subStep=52;
+                // mode=-1;
+                // sub_isStop=true;
+                // cout<<"robOKAction_clien connect faile"<<endl;
                 break;
 
             case 52:
@@ -523,7 +549,7 @@ void StateController::thread_voiceCtl_modeTask_5() {
                     mode=1;
                     assist_funcRunOnce= false;
                     sub_isStop=true;
-                    flag_openOnce=false;
+                    // flag_openOnce=false;
                     RobSayWords("祝您生活愉快,再见");
                 } else
                 {
@@ -590,7 +616,7 @@ void StateController::thread_timerFor10s(){
     {
         sleep(1);
         i++;
-        if( i  == 30){
+        if( i  == 15){
             stop_timer = true;
             timer_ok=true;
             break;
@@ -744,6 +770,7 @@ void StateController::stopController(){
     srv.request.request= false;
     rosTopicHd->switch_voiceDetect_client->call(srv);
     //
+    stop_timer = true;
     isStop= true;
     sub_isStop= true;
     timer_ok=false;
@@ -778,5 +805,42 @@ bool StateController::GoodByeAction(){
             return true;
     }
     return false;
+
+}
+
+bool StateController::detectPerson()
+{
+    rb_msgAndSrv::rb_EmptyAndInt srv;
+    if(rosTopicHd->personDetect_client->call(srv))
+    {
+        //检测到行人
+        if(srv.response.res_data==1)
+        {
+            return true;
+        }
+        else//没检测到人 
+        {
+            if(detectPeople)
+            {
+                detectPeople = false;
+                //开始计时60s
+                rbQthread_timerFor10s->start();
+            }
+            return false;
+        }
+    }else
+    {
+        return false;
+    }
+}
+
+
+void StateController::closeAndOpenEnable(){
+    hsr_rosi_device::SetEnableSrv srv;
+    srv.request.enable= false;
+    rosTopicHd->RobEnable_client->call(srv);
+    sleep(1);
+    srv.request.enable= true;
+    rosTopicHd->RobEnable_client->call(srv);
 
 }

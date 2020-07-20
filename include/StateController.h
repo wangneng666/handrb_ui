@@ -179,6 +179,10 @@ public:
       */
      bool GoodByeAction();
 
+     bool detectPerson();
+
+     void closeAndOpenEnable();
+
 };
 
 

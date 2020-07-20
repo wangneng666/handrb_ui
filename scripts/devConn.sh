@@ -7,6 +7,6 @@
   rosrun hsc3api_bridge hsc3api_bridge &
   sleep 3
   rosrun gripper_bridge opensensor.sh &
-  rosrun gripper_bridge five_finger_gripper.sh
+  rosrun gripper_bridge five_finger_gripper.sh &
 wait
 exit 0
